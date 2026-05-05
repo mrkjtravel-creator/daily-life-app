@@ -4,13 +4,20 @@ const ProfileScreen = {
   id: 'screen-profile',
 
   template() {
+    const user = Store.get('user');
+    const name  = user ? user.name : 'Jim';
+    const email = user ? user.email : '未連接 Google 帳號';
+    const status = user ? '✓ 已連接' : '未連接';
+    const statusColor = user ? 'var(--accent)' : '#999';
+
     return `
       <div class="scroll-area">
         <div class="profile-wrap">
 
           <div class="profile-hero">
+            ${user && user.picture ? `<img src="${user.picture}" class="profile-img" />` : ''}
             <div>
-              <div class="profile-name">Jim</div>
+              <div class="profile-name">${name}</div>
               <div class="profile-sub" id="profile-tz"></div>
             </div>
           </div>
@@ -53,8 +60,8 @@ const ProfileScreen = {
           <div class="pref-section">
             <div class="pref-section-title">帳號</div>
             <div class="pref-item">
-              <span class="pref-name">jim@example.com</span>
-              <span class="pref-value" style="color:var(--accent)">✓ 已連接</span>
+              <span class="pref-name" id="profile-email">${email}</span>
+              <span class="pref-value" id="profile-status" style="color:${statusColor}">${status}</span>
             </div>
           </div>
 

@@ -2,7 +2,7 @@
 
 const GCal = (() => {
   const CLIENT_ID = '161440799211-3ihs9hppl6vuptv9f22jis4rkld5ccbm.apps.googleusercontent.com';
-  const SCOPE     = 'https://www.googleapis.com/auth/calendar.readonly';
+  const SCOPE     = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
 
   let tokenClient  = null;
   let accessToken  = null;
@@ -15,6 +15,7 @@ const GCal = (() => {
       callback:  (res) => {
         if (res.error) { console.warn('GCal auth error', res); return; }
         accessToken = res.access_token;
+        fetchUserInfo();
         fetchEvents();
       },
     });
@@ -32,7 +33,29 @@ const GCal = (() => {
       accessToken = null;
     }
     Store.set('calEvents', []);
+    Store.set('user', null);
     _refreshCalendarUI();
+    const prof = document.getElementById('screen-profile');
+    if (prof && prof.classList.contains('active')) App.navigate('screen-profile');
+  }
+
+  async function fetchUserInfo() {
+    if (!accessToken) return;
+    try {
+      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        Store.set('user', {
+          email: data.email,
+          name:  data.name || data.given_name || 'User',
+          picture: data.picture
+        });
+        const prof = document.getElementById('screen-profile');
+        if (prof && prof.classList.contains('active')) App.navigate('screen-profile');
+      }
+    } catch (err) { console.warn('User info fetch failed', err); }
   }
 
   async function fetchEvents() {
