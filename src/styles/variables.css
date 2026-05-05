@@ -1,0 +1,72 @@
+:root {
+  /* ── Palette ── */
+  --bg:           #FAF8F3;
+  --card:         #FFFFFF;
+  --text:         #1E1B2E;
+  --muted:        #9B96A8;
+  --border:       #ECEAF3;
+
+  /* Accent — teal */
+  --accent:       #2AAFA8;
+  --accent-light: #E4F7F6;
+  --accent-dark:  #1A7A76;
+
+  /* Event colour tokens */
+  --peach-bg:     #FEF3E6;
+  --peach-bd:     #F8CDA0;
+  --peach-tx:     #8A4E1A;
+
+  --blue-bg:      #EAF0FD;
+  --blue-bd:      #A8C4F0;
+  --blue-tx:      #1A3E7A;
+
+  --pink-bg:      #FDE8ED;
+  --pink-bd:      #F7B5C2;
+  --pink-tx:      #8A2040;
+
+  --purple-bg:    #F0ECFD;
+  --purple-bd:    #C4B0F0;
+  --purple-tx:    #3A1E8A;
+
+  --green-bg:     #E6F7EA;
+  --green-bd:     #A8E0B0;
+  --green-tx:     #1A6630;
+
+  --teal-bg:      #E4F7F6;
+  --teal-bd:      #2AAFA8;
+  --teal-tx:      #1A7A76;
+
+  /* ── Typography ── */
+  --font:         'Nunito', sans-serif;
+
+  /* ── Radius ── */
+  --r-sm:   8px;
+  --r-md:   12px;
+  --r-lg:   16px;
+  --r-xl:   22px;
+  --r-full: 9999px;
+
+  /* ── Spacing ── */
+  --sp-xs:  4px;
+  --sp-sm:  8px;
+  --sp-md:  12px;
+  --sp-lg:  16px;
+  --sp-xl:  20px;
+  --sp-2xl: 24px;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 4px rgba(30,27,46,.06);
+  --shadow-md: 0 4px 16px rgba(30,27,46,.10);
+
+  /* ── Nav height (floating card: ~66px height + 20px bottom offset) ── */
+  --nav-h: 86px;
+}
+
+/* ── Dark mode ── */
+body.dark {
+  --bg:     #121212;
+  --card:   #1E1E1E;
+  --text:   #F2F2F2;
+  --muted:  #888888;
+  --border: #2E2E2E;
+}

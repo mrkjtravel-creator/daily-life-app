@@ -1,0 +1,22 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+button { cursor: pointer; border: none; background: none; }
+input, select, textarea { outline: none; }
+a { text-decoration: none; color: inherit; }
+ul, ol { list-style: none; }
+img { display: block; max-width: 100%; }
