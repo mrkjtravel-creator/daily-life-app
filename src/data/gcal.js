@@ -330,6 +330,8 @@ const GCal = (() => {
             meta:      isAllDay ? '全天' : `${startTime}${endTime ? ' – ' + endTime : ''}`,
             calName:   cal.summary || '',
             calId:     cal.id,
+            desc:      e.description || '',
+            location:  e.location || '',
             gcal:      true,
           });
         }
