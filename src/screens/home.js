@@ -219,17 +219,22 @@ const HomeScreen = {
 
   renderEvents() {
     const selectedDate = Store.get('selectedDate');
-    const calEvents = Store.get('calEvents') || [];
-    const tlEvents  = Store.get('tlEvents') || [];
+    const calEvents = (Store.get('calEvents') || []).filter(ev => ev.date === selectedDate);
+    const tlEvents  = (Store.get('tlEvents') || []).filter(ev => ev.date === selectedDate);
     
-    // Combine and filter by date
+    // De-duplicate: If a Personal event has the same name as a Google event, skip the Personal one.
+    const filteredTlEvents = tlEvents.filter(te => {
+      const isDuplicate = calEvents.some(ce => ce.name === te.name && ce.date === te.date);
+      return !isDuplicate;
+    });
+
     const combined = [
-      ...calEvents.filter(ev => ev.date === selectedDate).map(ev => ({ ...ev, category: 'calendar' })),
-      ...tlEvents.filter(ev => ev.date === selectedDate).map(ev => ({ ...ev, category: 'timeline' }))
+      ...calEvents.map(ev => ({ ...ev, category: 'calendar' })),
+      ...filteredTlEvents.map(ev => ({ ...ev, category: 'timeline' }))
     ];
 
     // Sort by start time if available
-    combined.sort((a, b) => (a.start || '').localeCompare(b.start || ''));
+    combined.sort((a, b) => (a.startTime || a.start || '').localeCompare(b.startTime || b.start || ''));
 
     const list = document.getElementById('home-event-list');
     if (!list) return;

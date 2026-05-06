@@ -113,8 +113,14 @@ const TimelineScreen = {
     const calEvents   = Store.get('calEvents') || [];
     
     // Combine and filter for selected date
-    const dayTlEvents  = tlEvents.filter(e => e.date === selectedDate);
     const dayCalEvents = calEvents.filter(e => e.date === selectedDate);
+    // De-duplicate: Hide local event if a Google event with same name exists
+    const dayTlEvents  = tlEvents.filter(e => {
+      if (e.date !== selectedDate) return false;
+      const isDuplicate = dayCalEvents.some(ce => ce.name === e.name);
+      return !isDuplicate;
+    });
+    
     const dayEvents    = [...dayTlEvents, ...dayCalEvents];
 
     const allDayEvents = dayEvents.filter(e => e.isAllDay);
