@@ -474,7 +474,11 @@ const GCal = (() => {
   async function completeTask(taskId) {
     if (!accessToken) return;
     const snapshot = Store.get('gTasks') || [];
-    Store.update('gTasks', arr => (arr || []).filter(t => t.id !== taskId));
+    const now = new Date();
+    const ts = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    Store.update('gTasks', arr => (arr || []).map(t =>
+      t.id === taskId ? { ...t, done: true, completedAt: ts } : t
+    ));
     _refreshCalendarUI();
     try {
       const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${taskId}`, {
