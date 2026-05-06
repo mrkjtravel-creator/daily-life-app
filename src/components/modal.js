@@ -13,9 +13,14 @@ const Modal = (() => {
   let selectedCategory = 'timeline'; // 'timeline' or 'todo'
   let isAllDay         = false;
 
+  let _closeTimer = null; // tracks in-flight close animation
+
 
 
   function open(mode, callback, item = null, isViewOnly = false) {
+    // Cancel any in-flight close animation
+    if (_closeTimer) { clearTimeout(_closeTimer); _closeTimer = null; }
+
     currentMode    = mode || 'habit';
     onSaveCallback = callback;
     editingItem    = item;
@@ -28,15 +33,22 @@ const Modal = (() => {
     } else {
       selectedCategory = mode === 'todo' ? 'todo' : 'timeline';
     }
-    isAllDay       = item ? (item.isAllDay || false) : false;
+    isAllDay = item ? (item.isAllDay || false) : false;
 
     if (isViewOnly && item) {
       renderViewMode();
     } else {
       renderEditMode();
     }
-    
-    document.getElementById('modal-overlay').classList.add('open');
+
+    // Reset inline styles from any previous gesture/animation
+    const overlay = document.getElementById('modal-overlay');
+    const sheet   = overlay.querySelector('.modal-sheet');
+    sheet.style.transform  = '';
+    sheet.style.transition = '';
+    overlay.style.background = '';
+
+    overlay.classList.add('open');
   }
 
   function renderViewMode() {
@@ -243,8 +255,21 @@ const Modal = (() => {
   }
 
   function close() {
-    document.getElementById('modal-overlay').classList.remove('open');
-    editingItem = null;
+    const overlay = document.getElementById('modal-overlay');
+    const sheet   = overlay.querySelector('.modal-sheet');
+
+    // Animate sheet down, fade backdrop
+    sheet.style.transition = 'transform 0.36s cubic-bezier(0.4, 0, 0.8, 0.6)';
+    sheet.style.transform  = 'translateY(110%)';
+    overlay.classList.remove('open'); // CSS fades backdrop via transition
+
+    _closeTimer = setTimeout(() => {
+      _closeTimer = null;
+      sheet.style.transform  = '';
+      sheet.style.transition = '';
+      overlay.style.background = '';
+      editingItem = null;
+    }, 380);
   }
 
   function renderDurationSelector() {
@@ -518,6 +543,67 @@ const Modal = (() => {
         renderDaySelector();
       });
     });
+
+    // ── Drag-to-dismiss gesture ──────────────────────────────
+    _initDragGesture();
+  }
+
+  function _initDragGesture() {
+    const overlay = document.getElementById('modal-overlay');
+    const sheet   = overlay.querySelector('.modal-sheet');
+
+    let startY    = 0;
+    let lastY     = 0;
+    let startTime = 0;
+    let dragging  = false;
+
+    const DRAG_ZONE = 64; // px from top of sheet that activates drag
+
+    sheet.addEventListener('touchstart', (e) => {
+      const rect   = sheet.getBoundingClientRect();
+      const touchY = e.touches[0].clientY;
+      // Only activate in the drag zone at top (handle + title area)
+      if (touchY - rect.top > DRAG_ZONE) return;
+      dragging  = true;
+      startY    = e.touches[0].clientY;
+      lastY     = startY;
+      startTime = Date.now();
+      sheet.style.transition = 'none';
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+      if (!dragging) return;
+      const y  = e.touches[0].clientY;
+      const dy = Math.max(0, y - startY);
+      lastY    = y;
+
+      sheet.style.transform = `translateY(${dy}px)`;
+
+      // Dim backdrop proportionally
+      const progress  = Math.min(1, dy / 280);
+      const bgOpacity = 0.48 * (1 - progress * 0.85);
+      overlay.style.background = `rgba(30, 27, 46, ${bgOpacity.toFixed(3)})`;
+    }, { passive: true });
+
+    window.addEventListener('touchend', () => {
+      if (!dragging) return;
+      dragging = false;
+
+      const dy       = Math.max(0, lastY - startY);
+      const elapsed  = Date.now() - startTime;
+      const velocity = elapsed > 0 ? dy / elapsed : 0; // px/ms
+
+      if (dy > 120 || velocity > 0.5) {
+        // Release and let close() handle the animation
+        close();
+      } else {
+        // Snap back to open position
+        sheet.style.transition = 'transform 0.42s cubic-bezier(0.32, 0.72, 0, 1)';
+        sheet.style.transform  = 'translateY(0)';
+        overlay.style.background = '';
+        setTimeout(() => { sheet.style.transition = ''; }, 440);
+      }
+    }, { passive: true });
   }
 
   return { open, close, init };

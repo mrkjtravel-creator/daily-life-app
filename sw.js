@@ -1,5 +1,5 @@
 // ── sw.js — Service Worker (PWA offline support) ─────────
-const CACHE_NAME = 'daily-life-v1.9';
+const CACHE_NAME = 'daily-life-v2.0';
 const ASSETS = [
   './',
   'index.html',
