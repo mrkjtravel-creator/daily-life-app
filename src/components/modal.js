@@ -437,25 +437,28 @@ const Modal = (() => {
     if (!editingItem) return;
     if (!confirm('確定要刪除嗎？')) return;
 
-    if (editingItem.gcal) {
-      if (editingItem.category === 'todo') {
-        GCal.deleteTask(editingItem.id);
+    const item = editingItem;
+    close();
+    if (onSaveCallback) onSaveCallback();
+
+    if (item.gcal) {
+      if (typeof Toast !== 'undefined') Toast.show('刪除中...', 'loading');
+      if (item.category === 'todo') {
+        GCal.deleteTask(item.id);
       } else {
-        GCal.deleteEvent(editingItem.id, editingItem.calId || 'primary');
+        GCal.deleteEvent(item.id, item.calId || 'primary');
       }
     } else {
       let key = 'tlEvents';
       if (currentMode === 'habit') key = 'habits';
-      else if (editingItem.category === 'todo') key = 'todoItems';
-      
-      Store.update(key, (arr) => arr.filter(x => x.id !== editingItem.id));
+      else if (item.category === 'todo') key = 'todoItems';
+
+      Store.update(key, (arr) => arr.filter(x => x.id !== item.id));
       if (currentMode === 'habit' && typeof GCal !== 'undefined' && GCal.syncHabitsBackup) {
         GCal.syncHabitsBackup();
       }
+      if (typeof Toast !== 'undefined') Toast.show('✓ 已刪除', 'success');
     }
-
-    close();
-    if (onSaveCallback) onSaveCallback();
   }
 
   function init() {

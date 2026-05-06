@@ -113,14 +113,8 @@ const GCal = (() => {
   }
 
   async function createEvent(event, localId, calId = 'primary') {
-    console.log('GCal.createEvent called', event);
-    if (!accessToken) {
-      console.log('No token, requesting...');
-      login();
-      return;
-    }
+    if (!accessToken) { login(); return; }
 
-    // Convert App event to GCal format
     const body = {
       summary: event.name,
       description: event.desc || '',
@@ -131,7 +125,6 @@ const GCal = (() => {
 
     if (event.isAllDay) {
       body.start.date = event.date;
-      // GCal all-day end is exclusive. We need to add 1 day to the date.
       const d = new Date(event.date);
       d.setDate(d.getDate() + 1);
       const pad = (n) => String(n).padStart(2, '0');
@@ -146,22 +139,42 @@ const GCal = (() => {
     try {
       const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      
+
       if (res.ok) {
-        console.log('Event synced to Google Calendar');
+        const created = await res.json();
+        // Remove local copy and inject the Google event directly
         if (localId) {
           Store.update('tlEvents', arr => (arr || []).filter(e => e.id !== localId));
         }
-        fetchEvents(); // Refresh to show the synced event
+        const calInfo = (Store.get('gcalCalendars') || []).find(c => c.id === calId) || {};
+        const isAllDay = !!created.start.date;
+        const startTime = created.start.dateTime
+          ? new Date(created.start.dateTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+          : '';
+        const endTime = created.end?.dateTime
+          ? new Date(created.end.dateTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+          : '';
+        const newEv = {
+          id:        'gc_' + created.id,
+          name:      created.summary || '(無標題)',
+          date:      (created.start.date || created.start.dateTime || '').slice(0, 10),
+          startTime, endTime,
+          isAllDay,
+          meta:      isAllDay ? '全天' : `${startTime}${endTime ? ' – ' + endTime : ''}`,
+          calName:   calInfo.summary || '',
+          calId:     calId,
+          color:     calInfo.color || '#4285F4',
+          desc:      created.description || '',
+          location:  created.location || '',
+          gcal:      true,
+        };
+        Store.update('calEvents', arr => [...(arr || []), newEv]);
+        _refreshCalendarUI();
       } else {
         const err = await res.json();
-        console.error('Failed to sync event', err);
         alert('同步至 Google 日曆失敗: ' + (err.error?.message || '未知錯誤'));
       }
     } catch (err) {
@@ -171,12 +184,7 @@ const GCal = (() => {
   }
 
   async function createTask(todo, localId) {
-    console.log('GCal.createTask called', todo);
-    if (!accessToken) {
-      console.log('No token, requesting...');
-      login();
-      return;
-    }
+    if (!accessToken) { login(); return; }
 
     const body = {
       title: todo.name,
@@ -187,22 +195,28 @@ const GCal = (() => {
     try {
       const res = await fetch('https://tasks.googleapis.com/tasks/v1/lists/@default/tasks', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
 
       if (res.ok) {
-        console.log('Task synced to Google Tasks');
+        const created = await res.json();
         if (localId) {
           Store.update('todoItems', arr => (arr || []).filter(t => t.id !== localId));
         }
-        fetchTasks(); 
+        const newTask = {
+          id:       created.id,
+          name:     created.title,
+          desc:     created.notes || '',
+          date:     created.due ? created.due.split('T')[0] : (todo.date || Store.get('selectedDate')),
+          done:     false,
+          gcal:     true,
+          category: 'todo'
+        };
+        Store.update('gTasks', arr => [...(arr || []), newTask]);
+        _refreshCalendarUI();
       } else {
         const err = await res.json();
-        console.error('Failed to sync task', err);
         if (res.status === 403 && err.error?.message?.includes('disabled')) {
           alert('同步失敗：請至 Google Cloud Console 啟用「Google Tasks API」。\n\n錯誤訊息：' + err.error.message);
         } else if (res.status === 403) {
@@ -350,6 +364,9 @@ const GCal = (() => {
   function _refreshCalendarUI() {
     if (document.getElementById('cal-grid'))  CalendarScreen.renderCalendar();
     if (document.getElementById('cal-list'))  CalendarScreen.renderAll();
+    if (document.getElementById('home-event-list')) HomeScreen.renderEvents();
+    if (document.getElementById('home-todo-list'))  HomeScreen.renderTodos();
+    if (document.getElementById('tl-timeline'))     TimelineScreen.renderTimeline();
   }
 
   async function updateEvent(eventId, event, calId = 'primary') {
@@ -380,19 +397,31 @@ const GCal = (() => {
     try {
       const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events/${gcalId}`, {
         method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      
+
       if (res.ok) {
-        console.log('Event updated in Google Calendar');
-        fetchEvents();
+        const isAllDay = event.isAllDay;
+        const startTime = event.startTime || '';
+        const endTime   = event.endTime   || '';
+        Store.update('calEvents', arr => (arr || []).map(e => {
+          if (e.id !== eventId) return e;
+          return {
+            ...e,
+            name:      event.name,
+            desc:      event.desc || '',
+            location:  event.loc  || '',
+            date:      event.date,
+            isAllDay,
+            startTime,
+            endTime,
+            meta:      isAllDay ? '全天' : `${startTime}${endTime ? ' – ' + endTime : ''}`,
+          };
+        }));
+        _refreshCalendarUI();
       } else {
         const err = await res.json();
-        console.error('Failed to update event', err);
         if (res.status === 403) {
           alert('更新失敗：權限不足。請登出後重新登入，並確保有勾選「Google 日曆」權限。');
         } else {
@@ -407,9 +436,9 @@ const GCal = (() => {
 
   async function updateTask(taskId, todo) {
     if (!accessToken) return;
-    
+
     const body = {
-      id: taskId,
+      id:    taskId,
       title: todo.name,
       notes: todo.desc || '',
       due:   todo.date ? `${todo.date}T00:00:00Z` : undefined
@@ -418,19 +447,18 @@ const GCal = (() => {
     try {
       const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${taskId}`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
 
       if (res.ok) {
-        console.log('Task updated in Google Tasks');
-        fetchTasks(); 
+        Store.update('gTasks', arr => (arr || []).map(t => {
+          if (t.id !== taskId) return t;
+          return { ...t, name: todo.name, desc: todo.desc || '', date: todo.date || t.date };
+        }));
+        _refreshCalendarUI();
       } else {
         const err = await res.json();
-        console.error('Failed to update task', err);
         if (res.status === 403) {
           alert('更新失敗：權限不足。請登出後重新登入，並確保有勾選「Google 工作表 (Tasks)」權限。');
         } else {
@@ -445,40 +473,50 @@ const GCal = (() => {
 
   async function deleteTask(taskId) {
     if (!accessToken) return;
+    const snapshot = Store.get('gTasks') || [];
+    Store.update('gTasks', arr => (arr || []).filter(t => t.id !== taskId));
+    _refreshCalendarUI();
     try {
       const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${taskId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${accessToken}` }
       });
       if (res.ok) {
-        console.log('Task deleted from Google Tasks');
-        fetchTasks();
+        if (typeof Toast !== 'undefined') Toast.show('✓ 成功刪除', 'success');
       } else {
-        console.error('Failed to delete task', await res.json());
-        alert('刪除工作表失敗');
+        Store.set('gTasks', snapshot);
+        _refreshCalendarUI();
+        if (typeof Toast !== 'undefined') Toast.show('刪除失敗，請重試', 'error');
       }
     } catch (err) {
-      console.error('GTasks delete error', err);
+      Store.set('gTasks', snapshot);
+      _refreshCalendarUI();
+      if (typeof Toast !== 'undefined') Toast.show('刪除失敗，請重試', 'error');
     }
   }
 
   async function deleteEvent(eventId, calId = 'primary') {
     if (!accessToken) return;
     const gcalId = eventId.replace(/^gc_/, '');
+    const snapshot = Store.get('calEvents') || [];
+    Store.update('calEvents', arr => (arr || []).filter(e => e.id !== eventId));
+    _refreshCalendarUI();
     try {
       const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events/${gcalId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${accessToken}` }
       });
       if (res.ok) {
-        console.log('Event deleted from Google Calendar');
-        fetchEvents();
+        if (typeof Toast !== 'undefined') Toast.show('✓ 成功刪除', 'success');
       } else {
-        console.error('Failed to delete event', await res.json());
-        alert('刪除日曆事件失敗');
+        Store.set('calEvents', snapshot);
+        _refreshCalendarUI();
+        if (typeof Toast !== 'undefined') Toast.show('刪除失敗，請重試', 'error');
       }
     } catch (err) {
-      console.error('GCal delete error', err);
+      Store.set('calEvents', snapshot);
+      _refreshCalendarUI();
+      if (typeof Toast !== 'undefined') Toast.show('刪除失敗，請重試', 'error');
     }
   }
 

@@ -274,6 +274,40 @@ const App = (() => {
   return { navigate, init, bindLongPress, bindSwipeRight };
 })();
 
+// ── Toast notification system ─────────────────────────────
+const Toast = (() => {
+  let _timer = null;
+  let _el = null;
+
+  function _getEl() {
+    if (!_el) {
+      _el = document.createElement('div');
+      _el.id = 'toast-bar';
+      document.getElementById('app').appendChild(_el);
+    }
+    return _el;
+  }
+
+  function show(msg, type = 'info', duration = 2500) {
+    const el = _getEl();
+    el.textContent = msg;
+    el.className = `toast toast-${type} toast-visible`;
+    clearTimeout(_timer);
+    if (type !== 'loading') {
+      _timer = setTimeout(() => el.classList.remove('toast-visible'), duration);
+    }
+    return el;
+  }
+
+  function hide() {
+    clearTimeout(_timer);
+    const el = _getEl();
+    el.classList.remove('toast-visible');
+  }
+
+  return { show, hide };
+})();
+
 // Bootstrap
 document.addEventListener('DOMContentLoaded', () => {
   App.init();
