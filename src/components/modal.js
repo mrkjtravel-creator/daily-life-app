@@ -51,7 +51,7 @@ const Modal = (() => {
     let title = '詳細資訊';
     if (currentMode === 'habit') title = '每日習慣';
     else if (item.category === 'todo') title = '代辦事項';
-    else title = '今日活動';
+    else title = '活動資訊';
 
     titleEl.textContent = title;
 
@@ -69,6 +69,15 @@ const Modal = (() => {
       timeStr = `${item.date} · ${item.start || ''}${item.end ? ' – ' + item.end : ''}`;
     }
 
+    let calNameHtml = '';
+    if (item.gcal && item.calId) {
+      const cals = Store.get('gcalCalendars') || [];
+      const cal = cals.find(c => c.id === item.calId);
+      if (cal) {
+        calNameHtml = `<div class="gcal-pill" style="margin-top:10px; font-size:12px; padding:4px 12px; background:${cal.color}22; color:${cal.color}; border: 1px solid ${cal.color};">${cal.summary}</div>`;
+      }
+    }
+
     viewWrap.innerHTML = `
       <div class="view-item">
         <div class="view-icon-lg" style="background:${item.color ? item.color + '33' : 'var(--border)'}">
@@ -78,6 +87,7 @@ const Modal = (() => {
           <div class="view-name-lg">${item.name}</div>
           <div class="view-meta-lg">${timeStr}</div>
           ${item.location ? `<div class="view-meta-lg">📍 ${item.location}</div>` : ''}
+          ${calNameHtml}
           ${item.desc ? `<div class="view-desc-lg">${item.desc}</div>` : ''}
         </div>
       </div>

@@ -170,10 +170,10 @@ const ProfileScreen = {
     }
 
     listEl.innerHTML = calendars.map(cal => `
-      <div class="pref-item" style="padding: 10px 0;">
-        <span class="pref-name" style="display:flex;align-items:center;gap:8px">
-          <div style="width:12px;height:12px;border-radius:50%;background:${cal.color}"></div>
-          ${cal.summary}
+      <div class="pref-item" style="border-radius: 500px; padding: 12px 16px; margin-bottom: 10px;">
+        <span class="pref-name" style="display:flex;align-items:center;gap:12px; max-width: 80%;">
+          <div style="width:14px;height:14px;border-radius:50%;background:${cal.color}; flex-shrink:0;"></div>
+          <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${cal.summary}</div>
         </span>
         <div class="toggle ${hidden.includes(cal.id) ? 'off' : ''}" data-calid="${cal.id}"></div>
       </div>
