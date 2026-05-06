@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#38D6CE"/>
+      <stop offset="100%" stop-color="#167E7A"/>
+    </linearGradient>
+    <!-- Soft inner highlight -->
+    <radialGradient id="shine" cx="35%" cy="28%" r="55%">
+      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="108" fill="url(#shine)"/>
+
+  <!-- 4-segment ring: draw full ring first, then punch gaps with background-colored dots -->
+  <circle cx="256" cy="256" r="155"
+          fill="none" stroke="white" stroke-width="24" stroke-opacity="0.92"/>
+
+  <!-- Gap dots at N / E / S / W — same gradient as bg, breaks ring into 4 segments -->
+  <!-- Top (12 o'clock) -->
+  <circle cx="256" cy="101" r="16" fill="#238B87"/>
+  <!-- Right (3 o'clock) -->
+  <circle cx="411" cy="256" r="16" fill="#1C8280"/>
+  <!-- Bottom (6 o'clock) -->
+  <circle cx="256" cy="411" r="16" fill="#167E7A"/>
+  <!-- Left (9 o'clock) -->
+  <circle cx="101" cy="256" r="16" fill="#238B87"/>
+
+  <!-- White dot caps to finish each segment end cleanly -->
+  <circle cx="256" cy="101" r="8" fill="white" opacity="0.9"/>
+  <circle cx="411" cy="256" r="8" fill="white" opacity="0.9"/>
+  <circle cx="256" cy="411" r="8" fill="white" opacity="0.9"/>
+  <circle cx="101" cy="256" r="8" fill="white" opacity="0.9"/>
+
+  <!-- Bold checkmark, centered within the ring -->
+  <path d="M176 262 L229 320 L342 186"
+        fill="none"
+        stroke="white"
+        stroke-width="42"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+</svg>

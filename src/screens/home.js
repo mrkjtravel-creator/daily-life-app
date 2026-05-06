@@ -203,7 +203,8 @@ const HomeScreen = {
 
       const completeAction = () => {
         if (isGcal) {
-          alert('請至 Google Tasks App 或網頁版勾選完成');
+          if (typeof Toast !== 'undefined') Toast.show('完成中...', 'loading');
+          GCal.completeTask(id);
           return;
         }
         const now = new Date();

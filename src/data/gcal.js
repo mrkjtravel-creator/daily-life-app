@@ -471,6 +471,31 @@ const GCal = (() => {
     }
   }
 
+  async function completeTask(taskId) {
+    if (!accessToken) return;
+    const snapshot = Store.get('gTasks') || [];
+    Store.update('gTasks', arr => (arr || []).filter(t => t.id !== taskId));
+    _refreshCalendarUI();
+    try {
+      const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'completed' }),
+      });
+      if (res.ok) {
+        if (typeof Toast !== 'undefined') Toast.show('✓ 已完成', 'success');
+      } else {
+        Store.set('gTasks', snapshot);
+        _refreshCalendarUI();
+        if (typeof Toast !== 'undefined') Toast.show('標記失敗，請重試', 'error');
+      }
+    } catch (err) {
+      Store.set('gTasks', snapshot);
+      _refreshCalendarUI();
+      if (typeof Toast !== 'undefined') Toast.show('標記失敗，請重試', 'error');
+    }
+  }
+
   async function deleteTask(taskId) {
     if (!accessToken) return;
     const snapshot = Store.get('gTasks') || [];
@@ -616,7 +641,7 @@ const GCal = (() => {
     } catch (e) { console.error('Failed to restore habits', e); }
   }
 
-  return { 
+  return {
     init, login, logout, fetchUserInfo,
     fetchEvents: wrapSync(fetchEvents),
     fetchTasks: wrapSync(fetchTasks),
@@ -624,6 +649,7 @@ const GCal = (() => {
     createTask: wrapSync(createTask),
     updateEvent: wrapSync(updateEvent),
     updateTask: wrapSync(updateTask),
+    completeTask: wrapSync(completeTask),
     deleteEvent: wrapSync(deleteEvent),
     deleteTask: wrapSync(deleteTask),
     syncHabitsBackup: wrapSync(syncHabitsBackup),
