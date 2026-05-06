@@ -101,7 +101,7 @@ const HomeScreen = {
           <div class="habit-name">${h.name}</div>
           <div class="habit-streak">連續 ${h.streak} 天</div>
         </div>
-        <div class="habit-time">${h.time}</div>
+        <div class="todo-done-time">${h.done && h.completedAt ? h.completedAt : h.time}</div>
       </div>
     `).join('');
 
@@ -124,8 +124,10 @@ const HomeScreen = {
       const btn = card.querySelector('[data-check]');
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
+        const now = new Date();
+        const ts = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
         Store.update('habits', (arr) =>
-          arr.map(x => x.id === id ? { ...x, done: !x.done } : x)
+          arr.map(x => x.id === id ? { ...x, done: !x.done, completedAt: x.done ? '' : ts } : x)
         );
         if (typeof GCal !== 'undefined' && GCal.syncHabitsBackup) GCal.syncHabitsBackup();
         this.renderHabits();
@@ -134,8 +136,10 @@ const HomeScreen = {
 
       // Swipe right to complete
       App.bindSwipeRight(card, () => {
+        const now = new Date();
+        const ts = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
         Store.update('habits', (arr) =>
-          arr.map(x => x.id === id ? { ...x, done: true, streak: x.done ? x.streak : (x.streak + 1) } : x)
+          arr.map(x => x.id === id ? { ...x, done: true, streak: x.done ? x.streak : (x.streak + 1), completedAt: x.done ? x.completedAt : ts } : x)
         );
         if (typeof GCal !== 'undefined' && GCal.syncHabitsBackup) GCal.syncHabitsBackup();
         this.renderHabits();
@@ -157,7 +161,12 @@ const HomeScreen = {
       return !googleTasks.some(gt => gt.name === lt.name);
     });
 
-    const todos = [...filteredLocal, ...googleTasks].filter(t => !t.done);
+    const allForDate = [...filteredLocal, ...googleTasks];
+    // Undone first, done at bottom
+    const todos = [
+      ...allForDate.filter(t => !t.done),
+      ...allForDate.filter(t => t.done),
+    ];
     const list = document.getElementById('home-todo-list');
     if (!list) return;
 
@@ -178,8 +187,8 @@ const HomeScreen = {
             <div class="habit-name">${t.name}</div>
             <div class="habit-streak">${t.desc || ''}</div>
           </div>
-          ${isGcal ? `<div class="event-tag tag-gcal" style="margin-left:8px; font-size:9px">Tasks</div>` : ''}
-          ${isDone && !isGcal ? `<div class="todo-done-time">${t.completedAt || ''}</div>` : ''}
+          ${isGcal && !isDone ? `<div class="event-tag tag-gcal" style="margin-left:8px; font-size:9px">Tasks</div>` : ''}
+          ${isDone ? `<div class="todo-done-time">${t.completedAt || ''}</div>` : ''}
         </div>
       `;
     }).join('');
@@ -222,13 +231,12 @@ const HomeScreen = {
         completeAction();
       });
 
-      // Swipe right to complete
+      // Swipe right to complete (only for undone items)
       App.bindSwipeRight(card, () => {
         const tNow = todos.find(x => x.id === id);
-        if (!tNow.done) {
+        if (tNow && !tNow.done) {
           completeAction();
         } else {
-          // Reset card if already done
           card.style.transform = 'translateX(0)';
           card.style.opacity = '1';
         }

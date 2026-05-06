@@ -184,7 +184,8 @@ body {
   text-overflow: ellipsis;
 }
 .habit-card.done .habit-name {
-  color: var(--muted);
+  text-decoration: line-through;
+  color: var(--text);
 }
 .habit-streak {
   font-size: 11px;
