@@ -109,8 +109,14 @@ const TimelineScreen = {
     const dayOfWeek    = Utils.parseDate(selectedDate).getDay();
 
     // Regular timeline events — split into all-day and timed
-    const allEvents   = Store.get('tlEvents') || [];
-    const dayEvents   = allEvents.filter(e => e.date === selectedDate);
+    const tlEvents    = Store.get('tlEvents') || [];
+    const calEvents   = Store.get('calEvents') || [];
+    
+    // Combine and filter for selected date
+    const dayTlEvents  = tlEvents.filter(e => e.date === selectedDate);
+    const dayCalEvents = calEvents.filter(e => e.date === selectedDate);
+    const dayEvents    = [...dayTlEvents, ...dayCalEvents];
+
     const allDayEvents = dayEvents.filter(e => e.isAllDay);
     const timedEvents  = dayEvents.filter(e => !e.isAllDay);
 
@@ -122,8 +128,8 @@ const TimelineScreen = {
 
     // All-day events — rendered as full-width rows above the hour grid
     const allDayHTML = allDayEvents.map((ev, i) => {
-      const c = EVENT_COLORS[ev.colorIdx] || EVENT_COLORS[0];
-      const showLabel = i === 0; // "All Day" label only on first row
+      const c = ev.gcal ? { bg: '#EAF0FD', tx: '#1A3E7A' } : (EVENT_COLORS[ev.colorIdx] || EVENT_COLORS[0]);
+      const showLabel = i === 0;
       return `
         <div class="tl-row tl-allday-row">
           <div class="tl-time-label tl-allday-label">${showLabel ? 'All Day' : ''}</div>
@@ -131,11 +137,13 @@ const TimelineScreen = {
             <div class="tl-axis-dot has-event"></div>
           </div>
           <div class="tl-content">
-            <div class="tl-event-block tl-allday-event" data-id="${ev.id}" style="background:${c.bg}">
+            <div class="tl-event-block tl-allday-event ${ev.gcal ? 'gcal-type' : ''}" data-id="${ev.id}" style="background:${c.bg}">
               <div class="tl-event-title" style="color:${c.tx}">
-                <span class="tl-hb-icon">${Utils.getIcon(ev.icon)}</span> ${ev.name}
+                ${ev.gcal ? '🗓️ ' : `<span class="tl-hb-icon">${Utils.getIcon(ev.icon)}</span> `}
+                ${ev.name}
               </div>
               ${ev.desc ? `<div class="tl-event-desc" style="color:${c.tx}">${ev.desc}</div>` : ''}
+              ${ev.gcal ? `<div class="tl-gcal-badge">${ev.calName || 'Google 日曆'}</div>` : ''}
             </div>
           </div>
         </div>
@@ -150,15 +158,18 @@ const TimelineScreen = {
       const hasItem = eventsHere.length > 0 || habitsHere.length > 0;
 
       const evHTML = eventsHere.map(ev => {
-        const c = EVENT_COLORS[ev.colorIdx] || EVENT_COLORS[0];
+        const c = ev.gcal ? { bg: '#EAF0FD', tx: '#1A3E7A' } : (EVENT_COLORS[ev.colorIdx] || EVENT_COLORS[0]);
         return `
-          <div class="tl-event-block" data-id="${ev.id}" style="background:${c.bg}">
-            <div class="tl-event-title" style="color:${c.tx}">${ev.name}</div>
+          <div class="tl-event-block ${ev.gcal ? 'gcal-type' : ''}" data-id="${ev.id}" style="background:${c.bg}">
+            <div class="tl-event-title" style="color:${c.tx}">
+              ${ev.gcal ? '🗓️ ' : ''}${ev.name}
+            </div>
             ${ev.location ? `<div class="tl-event-loc" style="color:${c.tx}">📍 ${ev.location}</div>` : ''}
             ${ev.desc ? `<div class="tl-event-desc" style="color:${c.tx}">${ev.desc}</div>` : ''}
             <div class="tl-event-time" style="color:${c.tx}">
-              ${this.fmtTime(ev.start)}${ev.end ? ' – ' + this.fmtTime(ev.end) : ''}
+              ${this.fmtTime(ev.startTime || ev.start)}${ev.endTime || ev.end ? ' – ' + this.fmtTime(ev.endTime || ev.end) : ''}
             </div>
+            ${ev.gcal ? `<div class="tl-gcal-badge">${ev.calName || 'Google 日曆'}</div>` : ''}
           </div>
         `;
       }).join('');

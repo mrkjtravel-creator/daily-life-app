@@ -156,12 +156,15 @@ const GCal = (() => {
             ? new Date(e.end.dateTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
             : '';
           events.push({
-            id:       uid,
-            name:     e.summary || '(無標題)',
-            date:     dateStr,
-            meta:     isAllDay ? '全天' : `${startTime}${endTime ? ' – ' + endTime : ''}`,
-            calName:  cal.summary || '',
-            gcal:     true,
+            id:        uid,
+            name:      e.summary || '(無標題)',
+            date:      dateStr,
+            startTime: startTime,
+            endTime:   endTime,
+            isAllDay:  isAllDay,
+            meta:      isAllDay ? '全天' : `${startTime}${endTime ? ' – ' + endTime : ''}`,
+            calName:   cal.summary || '',
+            gcal:      true,
           });
         }
       }
