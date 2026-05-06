@@ -199,8 +199,10 @@ const GCal = (() => {
   async function fetchEvents() {
     if (!accessToken) return;
 
-    const now = new Date().toISOString();
-    const end = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString();
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - 3); // 3 months ago
+    const now = startDate.toISOString();
+    const end = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(); // 6 months later
     const headers = { Authorization: `Bearer ${accessToken}` };
 
     try {
@@ -209,7 +211,12 @@ const GCal = (() => {
         'https://www.googleapis.com/calendar/v3/users/me/calendarList?minAccessRole=reader',
         { headers }
       );
-      if (!listRes.ok) throw new Error(`calendarList HTTP ${listRes.status}`);
+      if (!listRes.ok) {
+        if (listRes.status === 403) {
+          alert('讀取日曆失敗：權限不足。請登出後重新登入，並確保有勾選「Google 日曆」權限。');
+        }
+        throw new Error(`calendarList HTTP ${listRes.status}`);
+      }
       const listData = await listRes.json();
       const calendars = listData.items || [];
 
@@ -298,7 +305,7 @@ const GCal = (() => {
 
     try {
       const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${gcalId}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
