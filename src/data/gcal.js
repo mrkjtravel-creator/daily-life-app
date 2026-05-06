@@ -143,9 +143,15 @@ const GCal = (() => {
       } else {
         const err = await res.json();
         console.error('Failed to sync task', err);
+        if (res.status === 403) {
+          alert('同步失敗：權限不足。請登出後重新登入，並確保有勾選「Google 工作表 (Tasks)」權限。');
+        } else {
+          alert('同步工作表失敗: ' + (err.error?.message || '未知錯誤'));
+        }
       }
     } catch (err) {
       console.error('GTasks sync error', err);
+      alert('網路錯誤，無法同步至 Google Tasks');
     }
   }
 
