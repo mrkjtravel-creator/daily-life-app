@@ -175,7 +175,7 @@ const HomeScreen = {
             ${isDone ? '✓' : ''}
           </div>
           <div class="habit-body">
-            <div class="habit-name" style="text-decoration: ${isDone ? 'line-through' : 'none'}; opacity: ${isDone ? 0.6 : 1}">${t.name}</div>
+            <div class="habit-name">${t.name}</div>
             <div class="habit-streak">${t.desc || ''}</div>
           </div>
           ${isGcal ? `<div class="event-tag tag-gcal" style="margin-left:8px; font-size:9px">Tasks</div>` : ''}
