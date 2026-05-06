@@ -6,7 +6,7 @@ const ProfileScreen = {
   template() {
     const user = Store.get('user');
     const name  = user ? user.name : 'Jim';
-    const email = user ? user.email : '未連接 Google 帳號';
+    const email = user ? user.email : '登入連接 Google 帳號';
     const syncStatus = Store.get('syncStatus');
     let status = '未同步';
     let statusColor = '#999';
@@ -61,11 +61,13 @@ const ProfileScreen = {
 
           <div class="pref-section">
             <div class="pref-section-title">帳號</div>
-            <div class="pref-item">
+            ${user ? `
+            <div class="pref-item" id="btn-sync-gcal" style="cursor:pointer;">
               <span class="pref-name">Google 日曆同步</span>
-              <div class="toggle" id="tog-gcal" data-key="gcal"></div>
+              <span class="pref-value" style="color:var(--accent)">同步</span>
             </div>
-            <div class="pref-item">
+            ` : ''}
+            <div class="pref-item" id="btn-account-action" style="cursor:pointer;">
               <span class="pref-name" id="profile-email">${email}</span>
               <span class="pref-value" id="profile-status" style="color:${statusColor}">${status}</span>
             </div>
@@ -126,9 +128,36 @@ const ProfileScreen = {
         const isOn = !tog.classList.contains('off');
         this.savePref(key, isOn);
         if (key === 'dark') this.applyDark(isOn);
-        if (key === 'gcal') isOn ? GCal.login() : GCal.logout();
       });
     });
+
+    const btnSyncGcal = document.getElementById('btn-sync-gcal');
+    if (btnSyncGcal) {
+      btnSyncGcal.addEventListener('click', () => {
+        btnSyncGcal.querySelector('.pref-value').textContent = '同步中...';
+        if (typeof GCal !== 'undefined') {
+          GCal.fetchEvents();
+          GCal.fetchTasks();
+        }
+        setTimeout(() => {
+          if (btnSyncGcal) btnSyncGcal.querySelector('.pref-value').textContent = '同步';
+        }, 1500);
+      });
+    }
+
+    const btnAccountAction = document.getElementById('btn-account-action');
+    if (btnAccountAction) {
+      btnAccountAction.addEventListener('click', () => {
+        const user = Store.get('user');
+        if (user) {
+          if (confirm('確定要登出 Google 帳號嗎？')) {
+            if (typeof GCal !== 'undefined') GCal.logout();
+          }
+        } else {
+          if (typeof GCal !== 'undefined') GCal.login();
+        }
+      });
+    }
 
     const btnRestore = document.getElementById('btn-restore-habits');
     if (btnRestore) {
