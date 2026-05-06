@@ -75,6 +75,13 @@ const ProfileScreen = {
             </div>
           </div>
 
+          ${user ? `
+          <div class="pref-section" id="profile-calendars-section">
+            <div class="pref-section-title">顯示的日曆</div>
+            <div id="profile-calendars-list"></div>
+          </div>
+          ` : ''}
+
           <div class="pref-section">
             <div class="pref-section-title">危險區域</div>
             <div class="pref-item" id="btn-reset-data" style="cursor:pointer; color: #ff4d4d;">
@@ -130,6 +137,50 @@ const ProfileScreen = {
         }
       });
     }
+
+    this.renderCalendars();
+  },
+
+  renderCalendars() {
+    const listEl = document.getElementById('profile-calendars-list');
+    if (!listEl) return;
+    const calendars = Store.get('gcalCalendars') || [];
+    const hidden = Store.get('hiddenCalendars') || [];
+    
+    if (calendars.length === 0) {
+      listEl.innerHTML = `<div class="pref-item"><span class="pref-name" style="color:#999;font-size:13px;padding:4px 0;">尚無日曆資料，或同步中...</span></div>`;
+      return;
+    }
+
+    listEl.innerHTML = calendars.map(cal => `
+      <div class="pref-item" style="padding: 10px 0;">
+        <span class="pref-name" style="display:flex;align-items:center;gap:8px">
+          <div style="width:12px;height:12px;border-radius:50%;background:${cal.color}"></div>
+          ${cal.summary}
+        </span>
+        <div class="toggle ${hidden.includes(cal.id) ? 'off' : ''}" data-calid="${cal.id}"></div>
+      </div>
+    `).join('');
+
+    listEl.querySelectorAll('.toggle').forEach(tog => {
+      tog.addEventListener('click', () => {
+        tog.classList.toggle('off');
+        const isHidden = tog.classList.contains('off');
+        const calId = tog.dataset.calid;
+        
+        let arr = Store.get('hiddenCalendars') || [];
+        if (isHidden) {
+          if (!arr.includes(calId)) arr.push(calId);
+        } else {
+          arr = arr.filter(x => x !== calId);
+        }
+        Store.set('hiddenCalendars', arr);
+        
+        if (typeof GCal !== 'undefined') {
+          GCal.fetchEvents();
+        }
+      });
+    });
   },
 
   loadPrefs() {
