@@ -260,7 +260,7 @@ const GCal = (() => {
       }
       if (res.ok) {
         const data = await res.json();
-        const tasks = (data.items || []).map(t => ({
+        const newTasks = (data.items || []).map(t => ({
           id:      t.id,
           name:    t.title,
           desc:    t.notes || '',
@@ -269,7 +269,10 @@ const GCal = (() => {
           gcal:    true,
           category: 'todo'
         }));
-        Store.set('gTasks', tasks);
+        // Keep completed tasks from this session — API omits them with showCompleted=false
+        const prevDone = (Store.get('gTasks') || []).filter(t => t.done);
+        const newIds   = new Set(newTasks.map(t => t.id));
+        Store.set('gTasks', [...newTasks, ...prevDone.filter(t => !newIds.has(t.id))]);
         _refreshCalendarUI();
 
         // Auto restore habits if empty locally

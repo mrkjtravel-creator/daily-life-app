@@ -384,8 +384,6 @@ const Modal = (() => {
         });
       }
 
-      // Sync To-do to GTasks
-      console.log('Attempting GTasks sync...', todo);
       const prefs = Store.get('prefs');
       if (prefs && prefs.gcal) {
         if (editingItem && editingItem.gcal) {
@@ -401,8 +399,6 @@ const Modal = (() => {
             date: todo.date
           }, todo.id);
         }
-      } else {
-        console.log('GTasks sync skipped: prefs.gcal is', prefs ? prefs.gcal : 'undefined');
       }
     } else {
       // Activities (Timeline)
@@ -427,8 +423,6 @@ const Modal = (() => {
         });
       }
 
-      // Sync Activity to GCal
-      console.log('Attempting GCal sync...', item);
       const prefs = Store.get('prefs');
       if (prefs && prefs.gcal) {
         const calSel = document.getElementById('modal-calendar-select');
@@ -455,8 +449,6 @@ const Modal = (() => {
             endTime:   item.end
           }, item.id, targetCalId);
         }
-      } else {
-        console.log('GCal sync skipped: prefs.gcal is', prefs ? prefs.gcal : 'undefined');
       }
     }
 
