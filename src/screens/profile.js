@@ -50,10 +50,6 @@ const ProfileScreen = {
           <div class="pref-section">
             <div class="pref-section-title">設定</div>
             <div class="pref-item">
-              <span class="pref-name">Google 日曆同步</span>
-              <div class="toggle" id="tog-gcal" data-key="gcal"></div>
-            </div>
-            <div class="pref-item">
               <span class="pref-name">每日提醒通知</span>
               <div class="toggle" id="tog-notif" data-key="notif"></div>
             </div>
@@ -61,14 +57,14 @@ const ProfileScreen = {
               <span class="pref-name">深色模式</span>
               <div class="toggle off" id="tog-dark" data-key="dark"></div>
             </div>
-            <div class="pref-item">
-              <span class="pref-name">語言</span>
-              <span class="pref-value">繁體中文</span>
-            </div>
           </div>
 
           <div class="pref-section">
             <div class="pref-section-title">帳號</div>
+            <div class="pref-item">
+              <span class="pref-name">Google 日曆同步</span>
+              <div class="toggle" id="tog-gcal" data-key="gcal"></div>
+            </div>
             <div class="pref-item">
               <span class="pref-name" id="profile-email">${email}</span>
               <span class="pref-value" id="profile-status" style="color:${statusColor}">${status}</span>
