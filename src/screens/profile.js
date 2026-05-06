@@ -7,8 +7,18 @@ const ProfileScreen = {
     const user = Store.get('user');
     const name  = user ? user.name : 'Jim';
     const email = user ? user.email : '未連接 Google 帳號';
-    const status = user ? '✓ 已連接' : '未連接';
-    const statusColor = user ? 'var(--accent)' : '#999';
+    const syncStatus = Store.get('syncStatus');
+    let status = '未同步';
+    let statusColor = '#999';
+    if (user) {
+      if (syncStatus === 'syncing') {
+        status = '↻ 同步中';
+        statusColor = '#f39c12';
+      } else {
+        status = '✓ 已同步';
+        statusColor = 'var(--accent)';
+      }
+    }
 
     return `
       <div class="scroll-area">

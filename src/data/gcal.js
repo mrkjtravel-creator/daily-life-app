@@ -7,6 +7,42 @@ const GCal = (() => {
   let tokenClient  = null;
   let accessToken  = null;
 
+  let syncCount = 0;
+  function _setSyncState(isSyncing) {
+    if (isSyncing) {
+      syncCount++;
+      Store.set('syncStatus', 'syncing');
+    } else {
+      syncCount = Math.max(0, syncCount - 1);
+      if (syncCount === 0) Store.set('syncStatus', 'synced');
+    }
+    const statusEl = document.getElementById('profile-status');
+    if (statusEl) {
+      const user = Store.get('user');
+      if (!user) {
+        statusEl.textContent = '未同步';
+        statusEl.style.color = '#999';
+      } else if (Store.get('syncStatus') === 'syncing') {
+        statusEl.textContent = '↻ 同步中';
+        statusEl.style.color = '#f39c12';
+      } else {
+        statusEl.textContent = '✓ 已同步';
+        statusEl.style.color = 'var(--accent)';
+      }
+    }
+  }
+
+  function wrapSync(fn) {
+    return async function(...args) {
+      _setSyncState(true);
+      try {
+        return await fn(...args);
+      } finally {
+        _setSyncState(false);
+      }
+    };
+  }
+
   function init() {
     if (typeof google === 'undefined') return;
     
@@ -181,6 +217,7 @@ const GCal = (() => {
 
   async function fetchTasks() {
     if (!accessToken) return;
+    _setSyncState(true);
     try {
       const res = await fetch('https://www.googleapis.com/tasks/v1/lists/@default/tasks?showCompleted=false', {
         headers: { Authorization: `Bearer ${accessToken}` }
@@ -199,12 +236,17 @@ const GCal = (() => {
         Store.set('gTasks', tasks);
         _refreshCalendarUI();
       }
-    } catch (err) { console.warn('Fetch tasks failed', err); }
+    } catch (err) { 
+      console.warn('Fetch tasks failed', err); 
+    } finally {
+      _setSyncState(false);
+    }
   }
 
   async function fetchEvents() {
     if (!accessToken) return;
 
+    _setSyncState(true);
     const startDate = new Date();
     startDate.setMonth(startDate.getMonth() - 3); // 3 months ago
     const now = startDate.toISOString();
@@ -276,6 +318,8 @@ const GCal = (() => {
       _refreshCalendarUI();
     } catch (err) {
       console.warn('GCal fetch failed', err);
+    } finally {
+      _setSyncState(false);
     }
   }
 
@@ -414,5 +458,15 @@ const GCal = (() => {
     }
   }
 
-  return { init, login, logout, fetchEvents, fetchTasks, createEvent, createTask, updateEvent, updateTask, deleteEvent, deleteTask };
+  return { 
+    init, login, logout, fetchUserInfo,
+    fetchEvents: wrapSync(fetchEvents),
+    fetchTasks: wrapSync(fetchTasks),
+    createEvent: wrapSync(createEvent),
+    createTask: wrapSync(createTask),
+    updateEvent: wrapSync(updateEvent),
+    updateTask: wrapSync(updateTask),
+    deleteEvent: wrapSync(deleteEvent),
+    deleteTask: wrapSync(deleteTask)
+  };
 })();
