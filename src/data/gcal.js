@@ -185,7 +185,7 @@ const GCal = (() => {
     };
 
     try {
-      const res = await fetch('https://www.googleapis.com/tasks/v1/lists/@default/tasks', {
+      const res = await fetch('https://tasks.googleapis.com/tasks/v1/lists/@default/tasks', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -219,7 +219,7 @@ const GCal = (() => {
     if (!accessToken) return;
     _setSyncState(true);
     try {
-      const res = await fetch('https://www.googleapis.com/tasks/v1/lists/@default/tasks?showCompleted=false', {
+      const res = await fetch('https://tasks.googleapis.com/tasks/v1/lists/@default/tasks?showCompleted=false', {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
       if (res.ok) {
@@ -405,7 +405,7 @@ const GCal = (() => {
     };
 
     try {
-      const res = await fetch(`https://www.googleapis.com/tasks/v1/lists/@default/tasks/${taskId}`, {
+      const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${taskId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -435,7 +435,7 @@ const GCal = (() => {
   async function deleteTask(taskId) {
     if (!accessToken) return;
     try {
-      const res = await fetch(`https://www.googleapis.com/tasks/v1/lists/@default/tasks/${taskId}`, {
+      const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/@default/tasks/${taskId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${accessToken}` }
       });
