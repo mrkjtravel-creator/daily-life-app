@@ -79,6 +79,10 @@ const App = (() => {
             <label class="form-label">日期</label>
             <input class="form-input" id="modal-item-date" type="date" />
           </div>
+          <div class="form-group" id="modal-cal-wrap" style="display:none">
+            <label class="form-label">所屬日曆</label>
+            <select class="form-input" id="modal-calendar-select" style="background:#242424"></select>
+          </div>
           <div class="form-group">
             <label class="form-label">名稱</label>
             <input class="form-input" id="modal-name" placeholder="輸入名稱..." />

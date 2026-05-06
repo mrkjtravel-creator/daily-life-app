@@ -274,7 +274,7 @@ const HomeScreen = {
             <div class="event-time-label">${timeLabel}</div>
           </div>
           <div class="event-tag ${isGcal ? 'tag-gcal' : 'tag-personal'}">
-            ${isGcal ? 'Google 日曆' : '個人'}
+            ${isGcal ? `Google - ${ev.calName || '日曆'}` : '個人'}
           </div>
         </div>
       `;

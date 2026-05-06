@@ -139,6 +139,7 @@ const Modal = (() => {
     renderDurationSelector();
     renderCategorySelector();
     renderAllDayChip();
+    renderCalendarSelect();
   }
 
   function renderAllDayChip() {
@@ -182,6 +183,30 @@ const Modal = (() => {
 
     // Icon is useful for everything now
     setDisp(wraps.icon, true);
+
+    const prefs = Store.get('prefs');
+    const calWrap = document.getElementById('modal-cal-wrap');
+    if (calWrap) {
+      calWrap.style.display = (prefs && prefs.gcal && mode !== 'habit' && cat === 'timeline') ? 'block' : 'none';
+    }
+  }
+
+  function renderCalendarSelect() {
+    const sel = document.getElementById('modal-calendar-select');
+    if (!sel) return;
+    const cals = Store.get('gcalCalendars') || [];
+    sel.innerHTML = cals.map(c => `<option value="${c.id}">${c.summary}</option>`).join('');
+    
+    if (editingItem && editingItem.gcal && editingItem.calId) {
+      sel.value = editingItem.calId;
+      sel.disabled = true;
+      sel.style.opacity = '0.5';
+    } else {
+      sel.disabled = false;
+      sel.style.opacity = '1';
+      const primary = cals.find(c => c.id === Store.get('user')?.email) || cals[0];
+      if (primary) sel.value = primary.id;
+    }
   }
 
   function renderCategorySelector() {
@@ -366,6 +391,9 @@ const Modal = (() => {
       console.log('Attempting GCal sync...', item);
       const prefs = Store.get('prefs');
       if (prefs && prefs.gcal) {
+        const calSel = document.getElementById('modal-calendar-select');
+        const targetCalId = calSel ? calSel.value : 'primary';
+
         if (editingItem && editingItem.gcal) {
           GCal.updateEvent(editingItem.id, {
             name: item.name,
@@ -375,7 +403,7 @@ const Modal = (() => {
             isAllDay: item.isAllDay,
             startTime: item.start,
             endTime:   item.end
-          });
+          }, editingItem.calId || targetCalId);
         } else {
           GCal.createEvent({
             name: item.name,
@@ -385,7 +413,7 @@ const Modal = (() => {
             isAllDay: item.isAllDay,
             startTime: item.start,
             endTime:   item.end
-          }, item.id);
+          }, item.id, targetCalId);
         }
       } else {
         console.log('GCal sync skipped: prefs.gcal is', prefs ? prefs.gcal : 'undefined');
@@ -404,7 +432,7 @@ const Modal = (() => {
       if (editingItem.category === 'todo') {
         GCal.deleteTask(editingItem.id);
       } else {
-        GCal.deleteEvent(editingItem.id);
+        GCal.deleteEvent(editingItem.id, editingItem.calId || 'primary');
       }
     } else {
       let key = 'tlEvents';

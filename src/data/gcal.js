@@ -112,7 +112,7 @@ const GCal = (() => {
     } catch (err) { console.warn('User info fetch failed', err); }
   }
 
-  async function createEvent(event, localId) {
+  async function createEvent(event, localId, calId = 'primary') {
     console.log('GCal.createEvent called', event);
     if (!accessToken) {
       console.log('No token, requesting...');
@@ -144,7 +144,7 @@ const GCal = (() => {
     }
 
     try {
-      const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -321,6 +321,7 @@ const GCal = (() => {
             isAllDay:  isAllDay,
             meta:      isAllDay ? '全天' : `${startTime}${endTime ? ' – ' + endTime : ''}`,
             calName:   cal.summary || '',
+            calId:     cal.id,
             gcal:      true,
           });
         }
@@ -340,7 +341,7 @@ const GCal = (() => {
     if (document.getElementById('cal-list'))  CalendarScreen.renderAll();
   }
 
-  async function updateEvent(eventId, event) {
+  async function updateEvent(eventId, event, calId = 'primary') {
     if (!accessToken) return;
     const gcalId = eventId.replace(/^gc_/, '');
 
@@ -366,7 +367,7 @@ const GCal = (() => {
     }
 
     try {
-      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${gcalId}`, {
+      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events/${gcalId}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -450,11 +451,11 @@ const GCal = (() => {
     }
   }
 
-  async function deleteEvent(eventId) {
+  async function deleteEvent(eventId, calId = 'primary') {
     if (!accessToken) return;
     const gcalId = eventId.replace(/^gc_/, '');
     try {
-      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${gcalId}`, {
+      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events/${gcalId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${accessToken}` }
       });
