@@ -157,7 +157,7 @@ const HomeScreen = {
       return !googleTasks.some(gt => gt.name === lt.name);
     });
 
-    const todos = [...filteredLocal, ...googleTasks];
+    const todos = [...filteredLocal, ...googleTasks].filter(t => !t.done);
     const list = document.getElementById('home-todo-list');
     if (!list) return;
 
