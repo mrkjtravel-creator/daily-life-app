@@ -267,10 +267,22 @@ const GCal = (() => {
       }
       const listData = await listRes.json();
       const calendars = listData.items || [];
+      
+      Store.set('gcalCalendars', calendars.map(c => ({
+        id: c.id,
+        summary: c.summary,
+        color: c.backgroundColor || 'var(--accent)'
+      })));
+      if (typeof ProfileScreen !== 'undefined' && ProfileScreen.renderCalendars) {
+        ProfileScreen.renderCalendars();
+      }
 
-      // Step 2: fetch events from every calendar in parallel
+      const hidden = Store.get('hiddenCalendars') || [];
+      const activeCalendars = calendars.filter(c => !hidden.includes(c.id));
+
+      // Step 2: fetch events from active calendars in parallel
       const results = await Promise.allSettled(
-        calendars.map(cal =>
+        activeCalendars.map(cal =>
           fetch(
             `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events` +
             `?timeMin=${encodeURIComponent(now)}` +
