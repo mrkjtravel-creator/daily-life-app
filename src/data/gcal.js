@@ -9,6 +9,16 @@ const GCal = (() => {
 
   function init() {
     if (typeof google === 'undefined') return;
+    
+    // Try to restore token from session (short-term persistence)
+    const savedToken = sessionStorage.getItem('gcal_token');
+    if (savedToken) {
+      accessToken = savedToken;
+      fetchUserInfo();
+      fetchEvents();
+      fetchTasks();
+    }
+
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope:     SCOPE,
@@ -16,14 +26,14 @@ const GCal = (() => {
       callback:  (res) => {
         if (res.error) { 
           console.warn('GCal auth error', res);
-          alert('Google 授權失敗: ' + (res.error_description || res.error));
           return; 
         }
         accessToken = res.access_token;
+        sessionStorage.setItem('gcal_token', accessToken);
         console.log('GCal Token received');
         fetchUserInfo();
         fetchEvents();
-        fetchTasks(); // Added tasks fetch
+        fetchTasks();
       },
     });
   }
@@ -38,6 +48,7 @@ const GCal = (() => {
     if (accessToken) {
       google.accounts.oauth2.revoke(accessToken);
       accessToken = null;
+      sessionStorage.removeItem('gcal_token');
     }
     Store.set('calEvents', []);
     Store.set('user', null);
@@ -68,7 +79,8 @@ const GCal = (() => {
   async function createEvent(event) {
     console.log('GCal.createEvent called', event);
     if (!accessToken) {
-      alert('尚未獲得 Google 授權，請先登入 (accessToken is null)');
+      console.log('No token, requesting...');
+      login();
       return;
     }
 
@@ -122,7 +134,8 @@ const GCal = (() => {
   async function createTask(todo) {
     console.log('GCal.createTask called', todo);
     if (!accessToken) {
-      alert('尚未獲得 Google 授權，請先登入 (accessToken is null)');
+      console.log('No token, requesting...');
+      login();
       return;
     }
 
