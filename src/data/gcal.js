@@ -12,9 +12,15 @@ const GCal = (() => {
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope:     SCOPE,
+      prompt:    'select_account consent', // Force consent screen to ensure scopes are granted
       callback:  (res) => {
-        if (res.error) { console.warn('GCal auth error', res); return; }
+        if (res.error) { 
+          console.warn('GCal auth error', res);
+          alert('Google 授權失敗: ' + (res.error_description || res.error));
+          return; 
+        }
         accessToken = res.access_token;
+        console.log('GCal Token received');
         fetchUserInfo();
         fetchEvents();
       },
@@ -59,7 +65,10 @@ const GCal = (() => {
   }
 
   async function createEvent(event) {
-    if (!accessToken) return;
+    if (!accessToken) {
+      alert('尚未獲得 Google 授權，請先登入');
+      return;
+    }
 
     // Convert App event to GCal format
     const body = {
@@ -100,9 +109,11 @@ const GCal = (() => {
       } else {
         const err = await res.json();
         console.error('Failed to sync event', err);
+        alert('同步至 Google 日曆失敗: ' + (err.error?.message || '未知錯誤'));
       }
     } catch (err) {
       console.error('GCal sync error', err);
+      alert('網路錯誤，無法同步至 Google 日曆');
     }
   }
 
