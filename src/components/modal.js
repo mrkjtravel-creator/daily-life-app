@@ -23,7 +23,11 @@ const Modal = (() => {
     selectedDays   = item ? (item.days || [0,1,2,3,4,5,6]) : [0,1,2,3,4,5,6];
     selectedIcon   = item ? (item.icon || '✅') : '✅';
     selectedDuration = item ? (item.duration || 30) : 30;
-    selectedCategory = item ? (item.category || (mode === 'todo' ? 'todo' : 'timeline')) : (mode === 'todo' ? 'todo' : 'timeline');
+    if (item) {
+      selectedCategory = (item.category === 'todo' || item.category === 'todoItems') ? 'todo' : 'timeline';
+    } else {
+      selectedCategory = mode === 'todo' ? 'todo' : 'timeline';
+    }
     isAllDay       = item ? (item.isAllDay || false) : false;
 
     if (isViewOnly && item) {
