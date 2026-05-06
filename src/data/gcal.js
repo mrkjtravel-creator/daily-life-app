@@ -1,8 +1,9 @@
 // ── gcal.js — Google Calendar integration ────────────────
 
 const GCal = (() => {
-  const CLIENT_ID = '161440799211-3ihs9hppl6vuptv9f22jis4rkld5ccbm.apps.googleusercontent.com';
-  const SCOPE     = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
+  const CLIENT_ID   = '161440799211-3ihs9hppl6vuptv9f22jis4rkld5ccbm.apps.googleusercontent.com';
+  const SCOPE       = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
+  const TOKEN_TTL_MS = 55 * 60 * 1000; // access tokens live ~60 min; refresh at 55
 
   let tokenClient  = null;
   let accessToken  = null;
@@ -45,33 +46,47 @@ const GCal = (() => {
 
   function init() {
     if (typeof google === 'undefined') return;
-    
-    // Try to restore token from session (short-term persistence)
+
     const savedToken = sessionStorage.getItem('gcal_token');
-    if (savedToken) {
+    const savedExp   = parseInt(sessionStorage.getItem('gcal_token_exp') || '0', 10);
+    if (savedToken && Date.now() < savedExp) {
       accessToken = savedToken;
       fetchUserInfo();
       fetchEvents();
       fetchTasks();
+    } else if (savedToken) {
+      sessionStorage.removeItem('gcal_token');
+      sessionStorage.removeItem('gcal_token_exp');
     }
 
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope:     SCOPE,
-      prompt:    'select_account consent', 
+      prompt:    'select_account',
       callback:  (res) => {
-        if (res.error) { 
+        if (res.error) {
           console.warn('GCal auth error', res);
-          return; 
+          return;
         }
         accessToken = res.access_token;
-        sessionStorage.setItem('gcal_token', accessToken);
-        console.log('GCal Token received');
+        sessionStorage.setItem('gcal_token',     accessToken);
+        sessionStorage.setItem('gcal_token_exp', String(Date.now() + TOKEN_TTL_MS));
         fetchUserInfo();
         fetchEvents();
         fetchTasks();
       },
     });
+  }
+
+  function _handleTokenExpired() {
+    accessToken = null;
+    sessionStorage.removeItem('gcal_token');
+    sessionStorage.removeItem('gcal_token_exp');
+    Store.set('user', null);
+    Store.set('calEvents', []);
+    Store.set('gTasks', []);
+    _refreshCalendarUI();
+    if (typeof Toast !== 'undefined') Toast.show('登入已過期，請重新登入', 'error', 4000);
   }
 
   function login() {
@@ -85,12 +100,14 @@ const GCal = (() => {
       google.accounts.oauth2.revoke(accessToken);
       accessToken = null;
       sessionStorage.removeItem('gcal_token');
+      sessionStorage.removeItem('gcal_token_exp');
     }
     Store.set('calEvents', []);
+    Store.set('gTasks', []);
     Store.set('user', null);
     _refreshCalendarUI();
     const prof = document.getElementById('screen-profile');
-    if (prof && prof.classList.contains('active')) App.navigate('screen-profile');
+    if (prof && prof.classList.contains('active')) App.navigate('screen-profile', true);
   }
 
   async function fetchUserInfo() {
@@ -107,7 +124,7 @@ const GCal = (() => {
           picture: data.picture
         });
         const prof = document.getElementById('screen-profile');
-        if (prof && prof.classList.contains('active')) App.navigate('screen-profile');
+        if (prof && prof.classList.contains('active')) App.navigate('screen-profile', true);
       }
     } catch (err) { console.warn('User info fetch failed', err); }
   }
@@ -238,6 +255,9 @@ const GCal = (() => {
       const res = await fetch('https://tasks.googleapis.com/tasks/v1/lists/@default/tasks?showCompleted=false', {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
+      if (!res.ok) {
+        if (res.status === 401) { _handleTokenExpired(); return; }
+      }
       if (res.ok) {
         const data = await res.json();
         const tasks = (data.items || []).map(t => ({
@@ -282,6 +302,7 @@ const GCal = (() => {
         { headers }
       );
       if (!listRes.ok) {
+        if (listRes.status === 401) { _handleTokenExpired(); return; }
         if (listRes.status === 403) {
           alert('讀取日曆失敗：權限不足。請登出後重新登入，並確保有勾選「Google 日曆」權限。');
         }
@@ -309,7 +330,7 @@ const GCal = (() => {
             `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events` +
             `?timeMin=${encodeURIComponent(now)}` +
             `&timeMax=${encodeURIComponent(end)}` +
-            `&singleEvents=true&orderBy=startTime&maxResults=100`,
+            `&singleEvents=true&orderBy=startTime&maxResults=250`,
             { headers }
           ).then(r => r.ok ? r.json() : Promise.reject(r.status))
            .then(data => ({ cal, items: data.items || [] }))

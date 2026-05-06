@@ -148,8 +148,8 @@ const App = (() => {
     app.insertAdjacentHTML('beforeend', modalHTML);
   }
 
-  function navigate(screenId) {
-    if (currentScreen === screenId) return;
+  function navigate(screenId, force = false) {
+    if (!force && currentScreen === screenId) return;
     currentScreen = screenId;
 
     // Hide all screens
