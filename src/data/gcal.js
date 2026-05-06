@@ -2,7 +2,7 @@
 
 const GCal = (() => {
   const CLIENT_ID = '161440799211-3ihs9hppl6vuptv9f22jis4rkld5ccbm.apps.googleusercontent.com';
-  const SCOPE     = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
+  const SCOPE     = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
 
   let tokenClient  = null;
   let accessToken  = null;
@@ -12,7 +12,7 @@ const GCal = (() => {
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope:     SCOPE,
-      prompt:    'select_account consent', // Force consent screen to ensure scopes are granted
+      prompt:    'select_account consent', 
       callback:  (res) => {
         if (res.error) { 
           console.warn('GCal auth error', res);
@@ -23,6 +23,7 @@ const GCal = (() => {
         console.log('GCal Token received');
         fetchUserInfo();
         fetchEvents();
+        fetchTasks(); // Added tasks fetch
       },
     });
   }
@@ -117,6 +118,60 @@ const GCal = (() => {
     }
   }
 
+  async function createTask(todo) {
+    if (!accessToken) return;
+
+    const body = {
+      title: todo.name,
+      notes: todo.desc || '',
+      due:   todo.date ? `${todo.date}T00:00:00Z` : undefined
+    };
+
+    try {
+      const res = await fetch('https://www.googleapis.com/tasks/v1/lists/@default/tasks', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        console.log('Task synced to Google Tasks');
+        fetchTasks(); 
+      } else {
+        const err = await res.json();
+        console.error('Failed to sync task', err);
+      }
+    } catch (err) {
+      console.error('GTasks sync error', err);
+    }
+  }
+
+  async function fetchTasks() {
+    if (!accessToken) return;
+    try {
+      const res = await fetch('https://www.googleapis.com/tasks/v1/lists/@default/tasks?showCompleted=false', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const tasks = (data.items || []).map(t => ({
+          id:      t.id,
+          name:    t.title,
+          desc:    t.notes || '',
+          date:    t.due ? t.due.split('T')[0] : Store.get('selectedDate'),
+          done:    t.status === 'completed',
+          gcal:    true,
+          category: 'todo'
+        }));
+        Store.set('gTasks', tasks);
+        _refreshCalendarUI();
+      }
+    } catch (err) { console.warn('Fetch tasks failed', err); }
+  }
+
   async function fetchEvents() {
     if (!accessToken) return;
 
@@ -192,5 +247,5 @@ const GCal = (() => {
     if (document.getElementById('cal-list'))  CalendarScreen.renderAll();
   }
 
-  return { init, login, logout, fetchEvents, createEvent };
+  return { init, login, logout, fetchEvents, fetchTasks, createEvent, createTask };
 })();

@@ -317,14 +317,13 @@ const Modal = (() => {
         return [...filtered, todo];
       });
 
-      // Sync To-do to GCal
+      // Sync To-do to GTasks
       const prefs = Store.get('prefs');
       if (prefs && prefs.gcal) {
-        GCal.createEvent({
+        GCal.createTask({
           name: todo.name,
           desc: todo.desc,
-          date: todo.date,
-          isAllDay: true // To-dos are treated as all-day
+          date: todo.date
         });
       }
     } else {

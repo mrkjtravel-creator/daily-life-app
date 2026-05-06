@@ -146,7 +146,17 @@ const HomeScreen = {
   renderTodos() {
     const selectedDate = Store.get('selectedDate');
     const allTodos = Store.get('todoItems') || [];
-    const todos = allTodos.filter(t => t.date === selectedDate);
+    const gTasks   = Store.get('gTasks') || [];
+    
+    const localTodos = allTodos.filter(t => t.date === selectedDate);
+    const googleTasks = gTasks.filter(t => t.date === selectedDate);
+    
+    // De-duplicate: If a local todo has same name as a Google task, hide local
+    const filteredLocal = localTodos.filter(lt => {
+      return !googleTasks.some(gt => gt.name === lt.name);
+    });
+
+    const todos = [...filteredLocal, ...googleTasks];
     const list = document.getElementById('home-todo-list');
     if (!list) return;
 
@@ -157,27 +167,31 @@ const HomeScreen = {
 
     list.innerHTML = todos.map(t => {
       const isDone = !!t.done;
+      const isGcal = !!t.gcal;
       return `
-        <div class="habit-card ${isDone ? 'done' : ''}" data-id="${t.id}">
+        <div class="habit-card ${isDone ? 'done' : ''}" data-id="${t.id}" data-gcal="${isGcal}">
           <div class="habit-check ${isDone ? 'done' : ''}" data-check="${t.id}">
             ${isDone ? '✓' : ''}
           </div>
-          <div class="habit-icon" style="background:${t.color}33">${Utils.getIcon(t.icon)}</div>
+          <div class="habit-icon" style="background:${isGcal ? '#EAF0FD' : (t.color || '#eee')}33">${Utils.getIcon(t.icon || '📝')}</div>
           <div class="habit-body">
             <div class="habit-name" style="text-decoration: ${isDone ? 'line-through' : 'none'}; opacity: ${isDone ? 0.6 : 1}">${t.name}</div>
             <div class="habit-streak">${t.desc || ''}</div>
           </div>
-          ${isDone ? `<div class="todo-done-time">${t.completedAt || ''}</div>` : ''}
+          ${isGcal ? `<div class="event-tag tag-gcal" style="margin-left:8px; font-size:9px">Tasks</div>` : ''}
+          ${isDone && !isGcal ? `<div class="todo-done-time">${t.completedAt || ''}</div>` : ''}
         </div>
       `;
     }).join('');
 
     list.querySelectorAll('.habit-card').forEach(card => {
       const id = card.dataset.id;
+      const isGcal = card.dataset.gcal === 'true';
       const t  = todos.find(x => x.id === id);
 
-      // Long press to edit
+      // Long press to edit (only for local)
       App.bindLongPress(card, () => {
+        if (isGcal) return;
         Modal.open('todo', () => this.renderTodos(), t, false);
       });
 
@@ -188,6 +202,10 @@ const HomeScreen = {
       });
 
       const completeAction = () => {
+        if (isGcal) {
+          alert('請至 Google Tasks App 或網頁版勾選完成');
+          return;
+        }
         const now = new Date();
         const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         Store.update('todoItems', (arr) =>
