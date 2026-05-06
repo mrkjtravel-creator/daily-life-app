@@ -312,7 +312,11 @@ const GCal = (() => {
       } else {
         const err = await res.json();
         console.error('Failed to update event', err);
-        alert('更新至 Google 日曆失敗: ' + (err.error?.message || '未知錯誤'));
+        if (res.status === 403) {
+          alert('更新失敗：權限不足。請登出後重新登入，並確保有勾選「Google 日曆」權限。');
+        } else {
+          alert('更新至 Google 日曆失敗: ' + (err.error?.message || '未知錯誤'));
+        }
       }
     } catch (err) {
       console.error('GCal update error', err);
@@ -346,7 +350,11 @@ const GCal = (() => {
       } else {
         const err = await res.json();
         console.error('Failed to update task', err);
-        alert('同步工作表失敗: ' + (err.error?.message || '未知錯誤'));
+        if (res.status === 403) {
+          alert('更新失敗：權限不足。請登出後重新登入，並確保有勾選「Google 工作表 (Tasks)」權限。');
+        } else {
+          alert('同步工作表失敗: ' + (err.error?.message || '未知錯誤'));
+        }
       }
     } catch (err) {
       console.error('GTasks update error', err);
