@@ -208,7 +208,15 @@ const Modal = (() => {
   function renderCalendarSelect() {
     const sel = document.getElementById('modal-calendar-select');
     if (!sel) return;
-    const cals = Store.get('gcalCalendars') || [];
+    const allCals = Store.get('gcalCalendars') || [];
+    const hidden  = Store.get('hiddenCalendars') || [];
+    
+    // Filter out hidden calendars, but always keep the one if we are editing an existing Google event
+    const cals = allCals.filter(c => {
+      if (editingItem && editingItem.gcal && editingItem.calId === c.id) return true;
+      return !hidden.includes(c.id);
+    });
+
     sel.innerHTML = cals.map(c => `<option value="${c.id}">${c.summary}</option>`).join('');
     
     if (editingItem && editingItem.gcal && editingItem.calId) {
