@@ -149,7 +149,7 @@ const TimelineScreen = {
                 ${ev.name}
               </div>
               ${ev.desc ? `<div class="tl-event-desc" style="color:${c.tx}">${ev.desc}</div>` : ''}
-              ${ev.gcal ? `<div class="tl-gcal-badge">Google - ${ev.calName || '日曆'}</div>` : ''}
+              ${ev.gcal ? `<div class="tl-gcal-badge" style="color:${c.tx}; border-color:${c.tx}33">Google · ${ev.calName || '日曆'}</div>` : ''}
             </div>
           </div>
         </div>
@@ -175,7 +175,7 @@ const TimelineScreen = {
             <div class="tl-event-time" style="color:${c.tx}">
               ${this.fmtTime(ev.startTime || ev.start)}${ev.endTime || ev.end ? ' – ' + this.fmtTime(ev.endTime || ev.end) : ''}
             </div>
-            ${ev.gcal ? `<div class="tl-gcal-badge">Google - ${ev.calName || '日曆'}</div>` : ''}
+            ${ev.gcal ? `<div class="tl-gcal-badge" style="color:${c.tx}; border-color:${c.tx}33">Google · ${ev.calName || '日曆'}</div>` : ''}
           </div>
         `;
       }).join('');
