@@ -145,7 +145,7 @@ const TimelineScreen = {
           <div class="tl-content">
             <div class="tl-event-block tl-allday-event ${ev.gcal ? 'gcal-type' : ''}" data-id="${ev.id}" style="background:${c.bg}">
               <div class="tl-event-title" style="color:${c.tx}">
-                ${ev.gcal ? '🗓️ ' : `<span class="tl-hb-icon">${Utils.getIcon(ev.icon)}</span> `}
+                ${ev.gcal ? '🗓️ ' : ''}
                 ${ev.name}
               </div>
               ${ev.desc ? `<div class="tl-event-desc" style="color:${c.tx}">${ev.desc}</div>` : ''}
@@ -193,7 +193,7 @@ const TimelineScreen = {
         return `
           <div class="tl-event-block habit-type" data-habit-id="${hb.id}" style="background:${hb.color}">
             <div class="tl-event-title" style="color:${hb.colorTx}">
-              <span class="tl-hb-icon">${Utils.getIcon(hb.icon)}</span> ${hb.name}
+              ${hb.name}
             </div>
             <div class="tl-event-time" style="color:${hb.colorTx}">
               ${this.fmtTime(start)} – ${this.fmtTime(endFmt)} · ${dur}分鐘

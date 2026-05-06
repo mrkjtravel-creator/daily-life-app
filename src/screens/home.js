@@ -97,7 +97,6 @@ const HomeScreen = {
         <div class="habit-check ${h.done ? 'done' : ''}" data-check="${h.id}">
           ${h.done ? '✓' : ''}
         </div>
-        <div class="habit-icon" style="background:${h.color}33">${Utils.getIcon(h.icon)}</div>
         <div class="habit-body">
           <div class="habit-name">${h.name}</div>
           <div class="habit-streak">連續 ${h.streak} 天</div>
@@ -175,7 +174,6 @@ const HomeScreen = {
           <div class="habit-check ${isDone ? 'done' : ''}" data-check="${t.id}">
             ${isDone ? '✓' : ''}
           </div>
-          <div class="habit-icon" style="background:${isGcal ? '#EAF0FD' : (t.color || '#eee')}33">${Utils.getIcon(t.icon || '📝')}</div>
           <div class="habit-body">
             <div class="habit-name" style="text-decoration: ${isDone ? 'line-through' : 'none'}; opacity: ${isDone ? 0.6 : 1}">${t.name}</div>
             <div class="habit-streak">${t.desc || ''}</div>

@@ -13,7 +13,7 @@ const Modal = (() => {
   let selectedCategory = 'timeline'; // 'timeline' or 'todo'
   let isAllDay         = false;
 
-  const ICONS = ['🥤', '🧘', '📖', '🤸', '🏃', '💻', '🍎', '🥦', '💧', '🚶', '😴', '💊', '🔋', '📝', '🧹', '🎨', '🎸', '🌱'];
+
 
   function open(mode, callback, item = null, isViewOnly = false) {
     currentMode    = mode || 'habit';
@@ -84,9 +84,6 @@ const Modal = (() => {
 
     viewWrap.innerHTML = `
       <div class="view-item">
-        <div class="view-icon-lg" style="background:${item.color ? item.color + '33' : 'var(--border)'}">
-          ${Utils.getIcon(item.icon)}
-        </div>
         <div class="view-main">
           <div class="view-name-lg">${item.name}</div>
           <div class="view-meta-lg">${timeStr}</div>
@@ -147,7 +144,6 @@ const Modal = (() => {
       if (idx !== -1) selectedColorIdx = idx;
     }
 
-    renderIconPicker();
     renderColorPicker();
     renderDaySelector();
     renderDurationSelector();
@@ -195,8 +191,8 @@ const Modal = (() => {
     setDisp(wraps.dur,   mode === 'habit');
     setDisp(wraps.days,  mode === 'habit');
 
-    // Icon is useful for everything now
-    setDisp(wraps.icon, true);
+    // Icon is removed
+    setDisp(wraps.icon, false);
 
     const prefs = Store.get('prefs');
     const calWrap = document.getElementById('modal-cal-wrap');
@@ -275,23 +271,7 @@ const Modal = (() => {
     });
   }
 
-  function renderIconPicker() {
-    const ip = document.getElementById('modal-icon-picker');
-    if (!ip) return;
-    ip.innerHTML = ICONS.map(icon => `
-      <div class="icon-item ${icon === selectedIcon ? 'selected' : ''}" data-icon="${icon}">
-        ${icon}
-      </div>
-    `).join('');
 
-    ip.querySelectorAll('.icon-item').forEach(item => {
-      item.addEventListener('click', () => {
-        selectedIcon = item.dataset.icon;
-        ip.querySelectorAll('.icon-item').forEach(el => el.classList.remove('selected'));
-        item.classList.add('selected');
-      });
-    });
-  }
 
   function renderColorPicker() {
     const cp = document.getElementById('modal-color-picker');

@@ -12,11 +12,7 @@ const Utils = {
     const [y, m, d] = str.split('-').map(Number);
     return new Date(y, m - 1, d);
   },
-  getIcon: (icon) => {
-    if (icon === '掃除') return '🧹';
-    if (icon === '跑步') return '🏃';
-    return icon || '✅';
-  }
+
 };
 
 const Store = (() => {

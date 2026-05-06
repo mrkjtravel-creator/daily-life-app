@@ -87,10 +87,7 @@ const App = (() => {
             <label class="form-label">名稱</label>
             <input class="form-input" id="modal-name" placeholder="輸入名稱..." />
           </div>
-          <div class="form-group" id="modal-icon-wrap">
-            <label class="form-label">圖標</label>
-            <div class="icon-picker" id="modal-icon-picker"></div>
-          </div>
+
           <div class="form-group">
             <label class="form-label">備註（選填）</label>
             <input class="form-input" id="modal-desc" placeholder="備註..." />
