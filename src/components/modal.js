@@ -438,10 +438,10 @@ const Modal = (() => {
     if (!confirm('確定要刪除嗎？')) return;
 
     const item = editingItem;
-    close();
-    if (onSaveCallback) onSaveCallback();
 
     if (item.gcal) {
+      close();
+      if (onSaveCallback) onSaveCallback();
       if (typeof Toast !== 'undefined') Toast.show('刪除中...', 'loading');
       if (item.category === 'todo') {
         GCal.deleteTask(item.id);
@@ -457,6 +457,8 @@ const Modal = (() => {
       if (currentMode === 'habit' && typeof GCal !== 'undefined' && GCal.syncHabitsBackup) {
         GCal.syncHabitsBackup();
       }
+      close();
+      if (onSaveCallback) onSaveCallback();
       if (typeof Toast !== 'undefined') Toast.show('✓ 已刪除', 'success');
     }
   }
