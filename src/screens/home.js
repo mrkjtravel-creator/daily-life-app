@@ -265,16 +265,18 @@ const HomeScreen = {
     list.innerHTML = combined.map(ev => {
       const timeLabel = ev.meta || (ev.start ? `${ev.start} - ${ev.end}` : '全天');
       const isGcal    = ev.category === 'calendar' && ev.gcal;
+      const dotColor  = (isGcal && ev.color) ? ev.color : 'var(--accent)';
+      const tagStyle  = (isGcal && ev.color) ? `background:${ev.color}1a; color:${ev.color}; border:1px solid ${ev.color}33` : '';
 
       return `
         <div class="event-card" data-id="${ev.id}" data-cat="${ev.category}">
-          <div class="event-dot" style="background:var(--accent)"></div>
+          <div class="event-dot" style="background:${dotColor}"></div>
           <div class="event-body">
             <div class="event-name">${ev.name}</div>
             <div class="event-time-label">${timeLabel}</div>
           </div>
-          <div class="event-tag ${isGcal ? 'tag-gcal' : 'tag-personal'}">
-            ${isGcal ? `Google - ${ev.calName || '日曆'}` : '個人'}
+          <div class="event-tag ${isGcal ? 'tag-gcal' : 'tag-personal'}" style="${tagStyle}">
+            ${isGcal ? `Google · ${ev.calName || '日曆'}` : '個人'}
           </div>
         </div>
       `;

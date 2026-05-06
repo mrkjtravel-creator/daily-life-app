@@ -146,7 +146,7 @@ const CalendarScreen = {
       const isToday   = ev.date === today;
       const timeLabel = ev.meta || (ev.start ? `${ev.start} – ${ev.end}` : '全天');
       const pill      = ev.gcal
-        ? `<span class="gcal-pill">Google - ${ev.calName || '日曆'}</span>`
+        ? `<span class="gcal-pill" style="background:${ev.color}1a; color:${ev.color}; border:1px solid ${ev.color}33">Google · ${ev.calName || '日曆'}</span>`
         : ev._src === 'tl'
           ? '<span class="gcal-pill" style="background:var(--purple-bg);color:var(--purple-tx)">時間表</span>'
           : '';
@@ -238,7 +238,7 @@ const CalendarScreen = {
     listEl.innerHTML = combined.map(ev => {
       const timeLabel = ev.meta || (ev.start ? `${ev.start} – ${ev.end}` : '全天');
       const pill = ev.gcal
-        ? `<span class="gcal-pill">Google - ${ev.calName || '日曆'}</span>`
+        ? `<span class="gcal-pill" style="background:${ev.color}1a; color:${ev.color}; border:1px solid ${ev.color}33">Google · ${ev.calName || '日曆'}</span>`
         : ev._src === 'tl'
           ? '<span class="gcal-pill" style="background:var(--purple-bg);color:var(--purple-tx)">時間表</span>'
           : '';
@@ -296,7 +296,7 @@ const CalendarScreen = {
           <div class="upcoming-body">
             <div class="upcoming-name">${ev.name}</div>
             <div class="upcoming-meta">${ev.meta}</div>
-            ${ev.gcal ? `<span class="gcal-pill">Google - ${ev.calName || '日曆'}</span>` : ''}
+            ${ev.gcal ? `<span class="gcal-pill" style="background:${ev.color}1a; color:${ev.color}; border:1px solid ${ev.color}33">Google · ${ev.calName || '日曆'}</span>` : ''}
           </div>
         </div>
       `;

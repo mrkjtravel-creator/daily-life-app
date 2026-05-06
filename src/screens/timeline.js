@@ -134,7 +134,7 @@ const TimelineScreen = {
 
     // All-day events — rendered as full-width rows above the hour grid
     const allDayHTML = allDayEvents.map((ev, i) => {
-      const c = ev.gcal ? { bg: '#EAF0FD', tx: '#1A3E7A' } : (EVENT_COLORS[ev.colorIdx] || EVENT_COLORS[0]);
+      const c = ev.gcal && ev.color ? { bg: ev.color + '1a', tx: ev.color, bd: ev.color } : (EVENT_COLORS[ev.colorIdx] || EVENT_COLORS[0]);
       const showLabel = i === 0;
       return `
         <div class="tl-row tl-allday-row">
@@ -143,7 +143,7 @@ const TimelineScreen = {
             <div class="tl-axis-dot has-event"></div>
           </div>
           <div class="tl-content">
-            <div class="tl-event-block tl-allday-event ${ev.gcal ? 'gcal-type' : ''}" data-id="${ev.id}" style="background:${c.bg}">
+            <div class="tl-event-block tl-allday-event ${ev.gcal ? 'gcal-type' : ''}" data-id="${ev.id}" style="background:${c.bg}; border-left-color:${c.bd || '#4285F4'}">
               <div class="tl-event-title" style="color:${c.tx}">
                 ${ev.gcal ? '🗓️ ' : ''}
                 ${ev.name}
@@ -164,9 +164,9 @@ const TimelineScreen = {
       const hasItem = eventsHere.length > 0 || habitsHere.length > 0;
 
       const evHTML = eventsHere.map(ev => {
-        const c = ev.gcal ? { bg: '#EAF0FD', tx: '#1A3E7A' } : (EVENT_COLORS[ev.colorIdx] || EVENT_COLORS[0]);
+        const c = ev.gcal && ev.color ? { bg: ev.color + '1a', tx: ev.color, bd: ev.color } : (EVENT_COLORS[ev.colorIdx] || EVENT_COLORS[0]);
         return `
-          <div class="tl-event-block ${ev.gcal ? 'gcal-type' : ''}" data-id="${ev.id}" style="background:${c.bg}">
+          <div class="tl-event-block ${ev.gcal ? 'gcal-type' : ''}" data-id="${ev.id}" style="background:${c.bg}; border-left-color:${c.bd || '#4285F4'}">
             <div class="tl-event-title" style="color:${c.tx}">
               ${ev.gcal ? '🗓️ ' : ''}${ev.name}
             </div>
