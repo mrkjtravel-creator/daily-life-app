@@ -66,8 +66,9 @@ const GCal = (() => {
   }
 
   async function createEvent(event) {
+    console.log('GCal.createEvent called', event);
     if (!accessToken) {
-      alert('尚未獲得 Google 授權，請先登入');
+      alert('尚未獲得 Google 授權，請先登入 (accessToken is null)');
       return;
     }
 
@@ -119,7 +120,11 @@ const GCal = (() => {
   }
 
   async function createTask(todo) {
-    if (!accessToken) return;
+    console.log('GCal.createTask called', todo);
+    if (!accessToken) {
+      alert('尚未獲得 Google 授權，請先登入 (accessToken is null)');
+      return;
+    }
 
     const body = {
       title: todo.name,
