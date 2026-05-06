@@ -128,6 +128,7 @@ const HomeScreen = {
         Store.update('habits', (arr) =>
           arr.map(x => x.id === id ? { ...x, done: !x.done } : x)
         );
+        if (typeof GCal !== 'undefined' && GCal.syncHabitsBackup) GCal.syncHabitsBackup();
         this.renderHabits();
         ProfileScreen.updateStats();
       });
@@ -137,6 +138,7 @@ const HomeScreen = {
         Store.update('habits', (arr) =>
           arr.map(x => x.id === id ? { ...x, done: true, streak: x.done ? x.streak : (x.streak + 1) } : x)
         );
+        if (typeof GCal !== 'undefined' && GCal.syncHabitsBackup) GCal.syncHabitsBackup();
         this.renderHabits();
         ProfileScreen.updateStats();
       });

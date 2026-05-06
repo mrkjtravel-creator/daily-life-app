@@ -73,6 +73,12 @@ const ProfileScreen = {
               <span class="pref-name" id="profile-email">${email}</span>
               <span class="pref-value" id="profile-status" style="color:${statusColor}">${status}</span>
             </div>
+            ${user ? `
+            <div class="pref-item" id="btn-restore-habits" style="cursor:pointer;">
+              <span class="pref-name">從雲端還原習慣紀錄</span>
+              <span class="pref-value" style="color:var(--accent)">還原</span>
+            </div>
+            ` : ''}
           </div>
 
           ${user ? `
@@ -127,6 +133,17 @@ const ProfileScreen = {
         if (key === 'gcal') isOn ? GCal.login() : GCal.logout();
       });
     });
+
+    const btnRestore = document.getElementById('btn-restore-habits');
+    if (btnRestore) {
+      btnRestore.addEventListener('click', async () => {
+        if (!confirm('這將會覆蓋你目前的習慣紀錄，確定要從雲端還原嗎？')) return;
+        btnRestore.querySelector('.pref-value').textContent = '還原中...';
+        await GCal.restoreHabitsBackup();
+        btnRestore.querySelector('.pref-value').textContent = '已還原';
+        setTimeout(() => btnRestore.querySelector('.pref-value').textContent = '還原', 2000);
+      });
+    }
 
     const resetBtn = document.getElementById('btn-reset-data');
     if (resetBtn) {

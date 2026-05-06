@@ -324,6 +324,7 @@ const Modal = (() => {
         if (editingItem) return arr.map(h => h.id === editingItem.id ? habit : h);
         return [...(arr || []), habit];
       });
+      if (typeof GCal !== 'undefined' && GCal.syncHabitsBackup) GCal.syncHabitsBackup();
     } else if (selectedCategory === 'todo') {
       const todo = {
         id:       editingItem ? editingItem.id : 'td' + Date.now(),
@@ -440,6 +441,9 @@ const Modal = (() => {
       else if (editingItem.category === 'todo') key = 'todoItems';
       
       Store.update(key, (arr) => arr.filter(x => x.id !== editingItem.id));
+      if (currentMode === 'habit' && typeof GCal !== 'undefined' && GCal.syncHabitsBackup) {
+        GCal.syncHabitsBackup();
+      }
     }
 
     close();

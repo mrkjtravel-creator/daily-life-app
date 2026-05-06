@@ -203,8 +203,10 @@ const GCal = (() => {
       } else {
         const err = await res.json();
         console.error('Failed to sync task', err);
-        if (res.status === 403) {
-          alert('同步失敗：權限不足。請登出後重新登入，並確保有勾選「Google 工作表 (Tasks)」權限。');
+        if (res.status === 403 && err.error?.message?.includes('disabled')) {
+          alert('同步失敗：請至 Google Cloud Console 啟用「Google Tasks API」。\n\n錯誤訊息：' + err.error.message);
+        } else if (res.status === 403) {
+          alert('同步失敗：權限不足。請登出後重新登入，並確保有勾選「Google 工作表 (Tasks)」權限。\n\n詳細訊息：' + (err.error?.message || '未知錯誤'));
         } else {
           alert('同步工作表失敗: ' + (err.error?.message || '未知錯誤'));
         }
@@ -235,6 +237,12 @@ const GCal = (() => {
         }));
         Store.set('gTasks', tasks);
         _refreshCalendarUI();
+
+        // Auto restore habits if empty locally
+        const localHabits = Store.get('habits') || [];
+        if (localHabits.length === 0) {
+          await restoreHabitsBackup();
+        }
       }
     } catch (err) { 
       console.warn('Fetch tasks failed', err); 
@@ -471,6 +479,102 @@ const GCal = (() => {
     }
   }
 
+  // -----------------------------------------
+  // Hidden Backup via Google Tasks
+  // -----------------------------------------
+  const BACKUP_LIST_NAME = '[Daily Life] 資料備份 (請勿刪除)';
+  const HABITS_TASK_TITLE = '習慣紀錄備份';
+
+  async function _getOrCreateBackupList() {
+    if (!accessToken) return null;
+    try {
+      const res = await fetch('https://tasks.googleapis.com/tasks/v1/users/@me/lists', {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      });
+      const data = await res.json();
+      let list = (data.items || []).find(l => l.title === BACKUP_LIST_NAME);
+      if (list) return list.id;
+
+      const createRes = await fetch('https://tasks.googleapis.com/tasks/v1/users/@me/lists', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: BACKUP_LIST_NAME })
+      });
+      const newList = await createRes.json();
+      return newList.id;
+    } catch (e) {
+      console.warn('Backup list error', e);
+      return null;
+    }
+  }
+
+  async function _getOrCreateBackupTask(listId) {
+    try {
+      const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${listId}/tasks?showHidden=true`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      });
+      const data = await res.json();
+      let task = (data.items || []).find(t => t.title === HABITS_TASK_TITLE);
+      if (task) return task.id;
+
+      const createRes = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${listId}/tasks`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: HABITS_TASK_TITLE })
+      });
+      const newTask = await createRes.json();
+      return newTask.id;
+    } catch (e) {
+      console.warn('Backup task error', e);
+      return null;
+    }
+  }
+
+  async function syncHabitsBackup() {
+    const prefs = Store.get('prefs');
+    if (!prefs || !prefs.gcal || !accessToken) return;
+    try {
+      const listId = await _getOrCreateBackupList();
+      if (!listId) return;
+      const taskId = await _getOrCreateBackupTask(listId);
+      if (!taskId) return;
+      const habits = Store.get('habits') || [];
+      await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${listId}/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: taskId, title: HABITS_TASK_TITLE, notes: JSON.stringify(habits) })
+      });
+      console.log('Habits backup synced');
+    } catch (e) {
+      console.error('Failed to sync habits backup', e);
+    }
+  }
+
+  async function restoreHabitsBackup() {
+    if (!accessToken) return;
+    try {
+      const listId = await _getOrCreateBackupList();
+      if (!listId) return;
+      const res = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${listId}/tasks?showHidden=true`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      });
+      const data = await res.json();
+      const task = (data.items || []).find(t => t.title === HABITS_TASK_TITLE);
+      if (task && task.notes) {
+        try {
+          const habits = JSON.parse(task.notes);
+          if (Array.isArray(habits)) {
+            Store.set('habits', habits);
+            if (typeof HomeScreen !== 'undefined' && HomeScreen.renderHabits) {
+              HomeScreen.renderHabits();
+            }
+            console.log('Habits restored from backup');
+          }
+        } catch (err) { console.warn('Parse habits backup error', err); }
+      }
+    } catch (e) { console.error('Failed to restore habits', e); }
+  }
+
   return { 
     init, login, logout, fetchUserInfo,
     fetchEvents: wrapSync(fetchEvents),
@@ -480,6 +584,8 @@ const GCal = (() => {
     updateEvent: wrapSync(updateEvent),
     updateTask: wrapSync(updateTask),
     deleteEvent: wrapSync(deleteEvent),
-    deleteTask: wrapSync(deleteTask)
+    deleteTask: wrapSync(deleteTask),
+    syncHabitsBackup: wrapSync(syncHabitsBackup),
+    restoreHabitsBackup: wrapSync(restoreHabitsBackup)
   };
 })();
