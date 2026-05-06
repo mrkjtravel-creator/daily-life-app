@@ -122,8 +122,27 @@ const ProfileScreen = {
     this.loadPrefs();
 
     document.querySelectorAll('.toggle[data-key]').forEach(tog => {
-      tog.addEventListener('click', () => {
+      tog.addEventListener('click', async () => {
         const key = tog.dataset.key;
+        const currentlyOn = !tog.classList.contains('off');
+
+        if (key === 'notif') {
+          if (!currentlyOn) { // User wants to turn ON
+            const userEmail = Store.get('user')?.email || '';
+            if (typeof FcmModule !== 'undefined') {
+              const success = await FcmModule.requestPushPermission(userEmail);
+              if (!success) {
+                // If permission denied or failed, don't change toggle UI
+                return;
+              }
+            }
+          } else { // User wants to turn OFF
+            if (typeof FcmModule !== 'undefined') {
+              FcmModule.removeTokenFromDatabase();
+            }
+          }
+        }
+
         tog.classList.toggle('off');
         const isOn = !tog.classList.contains('off');
         this.savePref(key, isOn);
