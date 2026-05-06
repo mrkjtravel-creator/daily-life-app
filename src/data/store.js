@@ -29,7 +29,7 @@ const Store = (() => {
     calEvents: [],
     selectedDate: Utils.fmtDate(new Date()),
     calMonth: { year: new Date().getFullYear(), month: new Date().getMonth() },
-    prefs: { gcal: true, notif: true, dark: false },
+    prefs: { gcal: true, dark: false },
     streakDays: 0,
   };
 

@@ -49,10 +49,7 @@ const ProfileScreen = {
 
           <div class="pref-section">
             <div class="pref-section-title">設定</div>
-            <div class="pref-item">
-              <span class="pref-name">每日提醒通知</span>
-              <div class="toggle" id="tog-notif" data-key="notif"></div>
-            </div>
+
             <div class="pref-item">
               <span class="pref-name">深色模式</span>
               <div class="toggle off" id="tog-dark" data-key="dark"></div>
@@ -122,27 +119,8 @@ const ProfileScreen = {
     this.loadPrefs();
 
     document.querySelectorAll('.toggle[data-key]').forEach(tog => {
-      tog.addEventListener('click', async () => {
+      tog.addEventListener('click', () => {
         const key = tog.dataset.key;
-        const currentlyOn = !tog.classList.contains('off');
-
-        if (key === 'notif') {
-          if (!currentlyOn) { // User wants to turn ON
-            const userEmail = Store.get('user')?.email || '';
-            if (typeof FcmModule !== 'undefined') {
-              const success = await FcmModule.requestPushPermission(userEmail);
-              if (!success) {
-                // If permission denied or failed, don't change toggle UI
-                return;
-              }
-            }
-          } else { // User wants to turn OFF
-            if (typeof FcmModule !== 'undefined') {
-              FcmModule.removeTokenFromDatabase();
-            }
-          }
-        }
-
         tog.classList.toggle('off');
         const isOn = !tog.classList.contains('off');
         this.savePref(key, isOn);
