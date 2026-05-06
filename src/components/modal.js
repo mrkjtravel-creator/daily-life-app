@@ -316,6 +316,17 @@ const Modal = (() => {
         const filtered = editingItem ? arr.filter(x => x.id !== editingItem.id) : (arr || []);
         return [...filtered, todo];
       });
+
+      // Sync To-do to GCal
+      const prefs = Store.get('prefs');
+      if (prefs && prefs.gcal) {
+        GCal.createEvent({
+          name: todo.name,
+          desc: todo.desc,
+          date: todo.date,
+          isAllDay: true // To-dos are treated as all-day
+        });
+      }
     } else {
       // Activities (Timeline)
       const item = {
@@ -334,12 +345,12 @@ const Modal = (() => {
       Store.update('tlEvents', (arr) => {
         const filtered = editingItem ? arr.filter(x => x.id !== editingItem.id) : (arr || []);
         const updated  = [...filtered, item];
-        return updated.sort((a, b) => a.start.localeCompare(b.start));
+        return updated.sort((a, b) => (a.start || '').localeCompare(b.start || ''));
       });
 
-      // Sync to Google Calendar if enabled
+      // Sync Activity to GCal
       const prefs = Store.get('prefs');
-      if (prefs && prefs.gcal && !editingItem) {
+      if (prefs && prefs.gcal) {
         GCal.createEvent({
           name: item.name,
           desc: item.desc,
