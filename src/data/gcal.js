@@ -2,7 +2,7 @@
 
 const GCal = (() => {
   const CLIENT_ID = '161440799211-3ihs9hppl6vuptv9f22jis4rkld5ccbm.apps.googleusercontent.com';
-  const SCOPE     = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
+  const SCOPE     = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
 
   let tokenClient  = null;
   let accessToken  = null;
@@ -56,6 +56,54 @@ const GCal = (() => {
         if (prof && prof.classList.contains('active')) App.navigate('screen-profile');
       }
     } catch (err) { console.warn('User info fetch failed', err); }
+  }
+
+  async function createEvent(event) {
+    if (!accessToken) return;
+
+    // Convert App event to GCal format
+    const body = {
+      summary: event.name,
+      description: event.desc || '',
+      location: event.loc || '',
+      start: {},
+      end: {},
+    };
+
+    if (event.isAllDay) {
+      body.start.date = event.date;
+      // GCal all-day end is exclusive. We need to add 1 day to the date.
+      const d = new Date(event.date);
+      d.setDate(d.getDate() + 1);
+      const pad = (n) => String(n).padStart(2, '0');
+      body.end.date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    } else {
+      body.start.dateTime = `${event.date}T${event.startTime || '00:00'}:00`;
+      body.end.dateTime   = `${event.date}T${event.endTime || '23:59'}:00`;
+      body.start.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      body.end.timeZone   = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    }
+
+    try {
+      const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      
+      if (res.ok) {
+        console.log('Event synced to Google Calendar');
+        fetchEvents(); // Refresh to show the synced event
+      } else {
+        const err = await res.json();
+        console.error('Failed to sync event', err);
+      }
+    } catch (err) {
+      console.error('GCal sync error', err);
+    }
   }
 
   async function fetchEvents() {
@@ -130,5 +178,5 @@ const GCal = (() => {
     if (document.getElementById('cal-list'))  CalendarScreen.renderAll();
   }
 
-  return { init, login, logout, fetchEvents };
+  return { init, login, logout, fetchEvents, createEvent };
 })();

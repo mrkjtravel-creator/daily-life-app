@@ -336,6 +336,20 @@ const Modal = (() => {
         const updated  = [...filtered, item];
         return updated.sort((a, b) => a.start.localeCompare(b.start));
       });
+
+      // Sync to Google Calendar if enabled
+      const prefs = Store.get('prefs');
+      if (prefs && prefs.gcal && !editingItem) {
+        GCal.createEvent({
+          name: item.name,
+          desc: item.desc,
+          loc:  item.location,
+          date: item.date,
+          isAllDay: item.isAllDay,
+          startTime: item.start,
+          endTime:   item.end
+        });
+      }
     }
 
     close();
