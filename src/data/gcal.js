@@ -271,5 +271,88 @@ const GCal = (() => {
     if (document.getElementById('cal-list'))  CalendarScreen.renderAll();
   }
 
-  return { init, login, logout, fetchEvents, fetchTasks, createEvent, createTask };
+  async function updateEvent(eventId, event) {
+    if (!accessToken) return;
+    const gcalId = eventId.replace(/^gc_/, '');
+
+    const body = {
+      summary: event.name,
+      description: event.desc || '',
+      location: event.loc || '',
+      start: {},
+      end: {},
+    };
+
+    if (event.isAllDay) {
+      body.start.date = event.date;
+      const d = new Date(event.date);
+      d.setDate(d.getDate() + 1);
+      const pad = (n) => String(n).padStart(2, '0');
+      body.end.date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    } else {
+      body.start.dateTime = `${event.date}T${event.startTime || '00:00'}:00`;
+      body.end.dateTime   = `${event.date}T${event.endTime || '23:59'}:00`;
+      body.start.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      body.end.timeZone   = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    }
+
+    try {
+      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${gcalId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      
+      if (res.ok) {
+        console.log('Event updated in Google Calendar');
+        fetchEvents();
+      } else {
+        const err = await res.json();
+        console.error('Failed to update event', err);
+        alert('更新至 Google 日曆失敗: ' + (err.error?.message || '未知錯誤'));
+      }
+    } catch (err) {
+      console.error('GCal update error', err);
+      alert('網路錯誤，無法更新至 Google 日曆');
+    }
+  }
+
+  async function updateTask(taskId, todo) {
+    if (!accessToken) return;
+    
+    const body = {
+      id: taskId,
+      title: todo.name,
+      notes: todo.desc || '',
+      due:   todo.date ? `${todo.date}T00:00:00Z` : undefined
+    };
+
+    try {
+      const res = await fetch(`https://www.googleapis.com/tasks/v1/lists/@default/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        console.log('Task updated in Google Tasks');
+        fetchTasks(); 
+      } else {
+        const err = await res.json();
+        console.error('Failed to update task', err);
+        alert('同步工作表失敗: ' + (err.error?.message || '未知錯誤'));
+      }
+    } catch (err) {
+      console.error('GTasks update error', err);
+      alert('網路錯誤，無法更新至 Google Tasks');
+    }
+  }
+
+  return { init, login, logout, fetchEvents, fetchTasks, createEvent, createTask, updateEvent, updateTask };
 })();

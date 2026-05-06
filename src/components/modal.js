@@ -312,20 +312,30 @@ const Modal = (() => {
         colorTx:  color.tx,
         done:     editingItem ? editingItem.done : false,
       };
-      Store.update('todoItems', (arr) => {
-        const filtered = editingItem ? arr.filter(x => x.id !== editingItem.id) : (arr || []);
-        return [...filtered, todo];
-      });
+      if (!(editingItem && editingItem.gcal)) {
+        Store.update('todoItems', (arr) => {
+          const filtered = editingItem ? arr.filter(x => x.id !== editingItem.id) : (arr || []);
+          return [...filtered, todo];
+        });
+      }
 
       // Sync To-do to GTasks
       console.log('Attempting GTasks sync...', todo);
       const prefs = Store.get('prefs');
       if (prefs && prefs.gcal) {
-        GCal.createTask({
-          name: todo.name,
-          desc: todo.desc,
-          date: todo.date
-        });
+        if (editingItem && editingItem.gcal) {
+          GCal.updateTask(editingItem.id, {
+            name: todo.name,
+            desc: todo.desc,
+            date: todo.date
+          });
+        } else if (!editingItem) {
+          GCal.createTask({
+            name: todo.name,
+            desc: todo.desc,
+            date: todo.date
+          });
+        }
       } else {
         console.log('GTasks sync skipped: prefs.gcal is', prefs ? prefs.gcal : 'undefined');
       }
@@ -344,25 +354,39 @@ const Modal = (() => {
         end:      isAllDay ? '' : (document.getElementById('modal-end').value   || '09:00'),
         colorIdx: selectedColorIdx,
       };
-      Store.update('tlEvents', (arr) => {
-        const filtered = editingItem ? arr.filter(x => x.id !== editingItem.id) : (arr || []);
-        const updated  = [...filtered, item];
-        return updated.sort((a, b) => (a.start || '').localeCompare(b.start || ''));
-      });
+      if (!(editingItem && editingItem.gcal)) {
+        Store.update('tlEvents', (arr) => {
+          const filtered = editingItem ? arr.filter(x => x.id !== editingItem.id) : (arr || []);
+          const updated  = [...filtered, item];
+          return updated.sort((a, b) => (a.start || '').localeCompare(b.start || ''));
+        });
+      }
 
       // Sync Activity to GCal
       console.log('Attempting GCal sync...', item);
       const prefs = Store.get('prefs');
       if (prefs && prefs.gcal) {
-        GCal.createEvent({
-          name: item.name,
-          desc: item.desc,
-          loc:  item.location,
-          date: item.date,
-          isAllDay: item.isAllDay,
-          startTime: item.start,
-          endTime:   item.end
-        });
+        if (editingItem && editingItem.gcal) {
+          GCal.updateEvent(editingItem.id, {
+            name: item.name,
+            desc: item.desc,
+            loc:  item.location,
+            date: item.date,
+            isAllDay: item.isAllDay,
+            startTime: item.start,
+            endTime:   item.end
+          });
+        } else if (!editingItem) {
+          GCal.createEvent({
+            name: item.name,
+            desc: item.desc,
+            loc:  item.location,
+            date: item.date,
+            isAllDay: item.isAllDay,
+            startTime: item.start,
+            endTime:   item.end
+          });
+        }
       } else {
         console.log('GCal sync skipped: prefs.gcal is', prefs ? prefs.gcal : 'undefined');
       }
