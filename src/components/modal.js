@@ -329,12 +329,12 @@ const Modal = (() => {
             desc: todo.desc,
             date: todo.date
           });
-        } else if (!editingItem) {
+        } else {
           GCal.createTask({
             name: todo.name,
             desc: todo.desc,
             date: todo.date
-          });
+          }, todo.id);
         }
       } else {
         console.log('GTasks sync skipped: prefs.gcal is', prefs ? prefs.gcal : 'undefined');
@@ -376,7 +376,7 @@ const Modal = (() => {
             startTime: item.start,
             endTime:   item.end
           });
-        } else if (!editingItem) {
+        } else {
           GCal.createEvent({
             name: item.name,
             desc: item.desc,
@@ -385,7 +385,7 @@ const Modal = (() => {
             isAllDay: item.isAllDay,
             startTime: item.start,
             endTime:   item.end
-          });
+          }, item.id);
         }
       } else {
         console.log('GCal sync skipped: prefs.gcal is', prefs ? prefs.gcal : 'undefined');
@@ -400,11 +400,19 @@ const Modal = (() => {
     if (!editingItem) return;
     if (!confirm('確定要刪除嗎？')) return;
 
-    let key = 'tlEvents';
-    if (currentMode === 'habit') key = 'habits';
-    else if (editingItem.category === 'todo') key = 'todoItems';
-    
-    Store.update(key, (arr) => arr.filter(x => x.id !== editingItem.id));
+    if (editingItem.gcal) {
+      if (editingItem.category === 'todo') {
+        GCal.deleteTask(editingItem.id);
+      } else {
+        GCal.deleteEvent(editingItem.id);
+      }
+    } else {
+      let key = 'tlEvents';
+      if (currentMode === 'habit') key = 'habits';
+      else if (editingItem.category === 'todo') key = 'todoItems';
+      
+      Store.update(key, (arr) => arr.filter(x => x.id !== editingItem.id));
+    }
 
     close();
     if (onSaveCallback) onSaveCallback();

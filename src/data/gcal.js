@@ -76,7 +76,7 @@ const GCal = (() => {
     } catch (err) { console.warn('User info fetch failed', err); }
   }
 
-  async function createEvent(event) {
+  async function createEvent(event, localId) {
     console.log('GCal.createEvent called', event);
     if (!accessToken) {
       console.log('No token, requesting...');
@@ -119,6 +119,9 @@ const GCal = (() => {
       
       if (res.ok) {
         console.log('Event synced to Google Calendar');
+        if (localId) {
+          Store.update('tlEvents', arr => (arr || []).filter(e => e.id !== localId));
+        }
         fetchEvents(); // Refresh to show the synced event
       } else {
         const err = await res.json();
@@ -131,7 +134,7 @@ const GCal = (() => {
     }
   }
 
-  async function createTask(todo) {
+  async function createTask(todo, localId) {
     console.log('GCal.createTask called', todo);
     if (!accessToken) {
       console.log('No token, requesting...');
@@ -157,6 +160,9 @@ const GCal = (() => {
 
       if (res.ok) {
         console.log('Task synced to Google Tasks');
+        if (localId) {
+          Store.update('todoItems', arr => (arr || []).filter(t => t.id !== localId));
+        }
         fetchTasks(); 
       } else {
         const err = await res.json();
@@ -369,5 +375,44 @@ const GCal = (() => {
     }
   }
 
-  return { init, login, logout, fetchEvents, fetchTasks, createEvent, createTask, updateEvent, updateTask };
+  async function deleteTask(taskId) {
+    if (!accessToken) return;
+    try {
+      const res = await fetch(`https://www.googleapis.com/tasks/v1/lists/@default/tasks/${taskId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      });
+      if (res.ok) {
+        console.log('Task deleted from Google Tasks');
+        fetchTasks();
+      } else {
+        console.error('Failed to delete task', await res.json());
+        alert('刪除工作表失敗');
+      }
+    } catch (err) {
+      console.error('GTasks delete error', err);
+    }
+  }
+
+  async function deleteEvent(eventId) {
+    if (!accessToken) return;
+    const gcalId = eventId.replace(/^gc_/, '');
+    try {
+      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${gcalId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      });
+      if (res.ok) {
+        console.log('Event deleted from Google Calendar');
+        fetchEvents();
+      } else {
+        console.error('Failed to delete event', await res.json());
+        alert('刪除日曆事件失敗');
+      }
+    } catch (err) {
+      console.error('GCal delete error', err);
+    }
+  }
+
+  return { init, login, logout, fetchEvents, fetchTasks, createEvent, createTask, updateEvent, updateTask, deleteEvent, deleteTask };
 })();
