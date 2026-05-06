@@ -16,18 +16,13 @@ const db = typeof firebase !== 'undefined' ? firebase.firestore() : null;
 const messaging = typeof firebase !== 'undefined' && firebase.messaging.isSupported() ? firebase.messaging() : null;
 
 // Replace this with your VAPID key from Firebase Console -> Project Settings -> Cloud Messaging
-const VAPID_KEY = "REPLACE_WITH_YOUR_VAPID_KEY";
+const VAPID_KEY = "BCFjsLq2_jpoyswRYKMK3v-57FtNRso7czFt9TiczBAALSxlaijkr3h6mSJTV7sl14CFZvvWA6_8liaq6qCbOUA";
 
 const FcmModule = (() => {
   
   async function requestPushPermission(userEmail) {
     if (!messaging) {
       alert("您的瀏覽器不支援推播通知");
-      return false;
-    }
-
-    if (VAPID_KEY === "REPLACE_WITH_YOUR_VAPID_KEY") {
-      alert("請先在 src/data/firebase.js 填入正確的 VAPID_KEY！");
       return false;
     }
 
