@@ -211,6 +211,12 @@ const Modal = (() => {
     if (calWrap) {
       calWrap.style.display = (prefs && prefs.gcal && mode !== 'habit' && cat === 'timeline') ? 'block' : 'none';
     }
+
+    // Hide color picker for GCal events (color is calendar-level, not editable here)
+    const colorPickerWrap = document.getElementById('modal-color-picker')?.parentElement;
+    if (colorPickerWrap) {
+      colorPickerWrap.style.display = (editingItem && editingItem.gcal) ? 'none' : '';
+    }
   }
 
   function renderCalendarSelect() {

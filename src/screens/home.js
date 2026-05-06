@@ -272,10 +272,13 @@ const HomeScreen = {
     }
 
     list.innerHTML = combined.map(ev => {
-      const timeLabel = ev.meta || (ev.start ? `${ev.start} - ${ev.end}` : '全天');
-      const isGcal    = ev.category === 'calendar' && ev.gcal;
-      const dotColor  = (isGcal && ev.color) ? ev.color : 'var(--accent)';
-      const tagStyle  = (isGcal && ev.color) ? `background:${ev.color}1a; color:${ev.color}; border:1px solid ${ev.color}33` : '';
+      const timeLabel  = ev.meta || (ev.start ? `${ev.start} - ${ev.end}` : '全天');
+      const isGcal     = ev.category === 'calendar' && ev.gcal;
+      const localColor = EVENT_COLORS[ev.colorIdx] || EVENT_COLORS[0];
+      const dotColor   = (isGcal && ev.color) ? ev.color : localColor.bd;
+      const tagStyle   = (isGcal && ev.color)
+        ? `background:${ev.color}1a; color:${ev.color}; border:1px solid ${ev.color}33`
+        : `background:${localColor.bg}; color:${localColor.tx}; border:1px solid ${localColor.bd}`;
 
       return `
         <div class="event-card" data-id="${ev.id}" data-cat="${ev.category}">
