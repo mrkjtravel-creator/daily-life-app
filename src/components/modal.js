@@ -214,10 +214,16 @@ const Modal = (() => {
     if (editingItem && editingItem.gcal && editingItem.calId) {
       sel.value = editingItem.calId;
       sel.disabled = true;
-      sel.style.opacity = '0.5';
+      sel.style.opacity = '1';
+      sel.style.color = 'var(--text)';
+      sel.style.webkitTextFillColor = 'var(--text)';
+      sel.style.backgroundColor = 'var(--card-hover)';
     } else {
       sel.disabled = false;
       sel.style.opacity = '1';
+      sel.style.color = '';
+      sel.style.webkitTextFillColor = '';
+      sel.style.backgroundColor = '';
       const primary = cals.find(c => c.id === Store.get('user')?.email) || cals[0];
       if (primary) sel.value = primary.id;
     }
