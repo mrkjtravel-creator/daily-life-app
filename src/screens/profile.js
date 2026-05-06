@@ -66,6 +66,14 @@ const ProfileScreen = {
           </div>
 
           <div class="pref-section">
+            <div class="pref-section-title">危險區域</div>
+            <div class="pref-item" id="btn-reset-data" style="cursor:pointer; color: #ff4d4d;">
+              <span class="pref-name">重置所有資料</span>
+              <span class="pref-value">⚠️</span>
+            </div>
+          </div>
+
+          <div class="pref-section">
             <div class="pref-section-title">關於</div>
             <div class="pref-item" style="cursor:default">
               <span class="pref-name">Daily Life</span>
@@ -102,6 +110,16 @@ const ProfileScreen = {
         if (key === 'gcal') isOn ? GCal.login() : GCal.logout();
       });
     });
+
+    const resetBtn = document.getElementById('btn-reset-data');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        if (confirm('確定要刪除所有本地資料嗎？此操作無法還原。')) {
+          localStorage.clear();
+          window.location.reload();
+        }
+      });
+    }
   },
 
   loadPrefs() {
